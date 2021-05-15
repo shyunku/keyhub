@@ -1,9 +1,28 @@
 /* ---------------------------- Imports ---------------------------- */
 const {ipcMain, webContents, app, BrowserWindow, screen, remote, Menu} = require('electron');
+const packageJson = require('../../package.json');
 
 /* ---------------------------- Declaration (Variables) ---------------------------- */
+const isBuildMode = !process.env.ELECTRON_START_URL;
 let mainWindow = null;
 let entryUrlPrefix = 'http://localhost:3000/';
+const defaultWindowProperties = {
+    width: 500,
+    height: 500,
+    webPreferences: {
+        nodeIntegration: true,
+        enableRemoteModule: true,
+        webviewTag: true,
+        webSecurity: false,
+        devTools: packageJson.debug || false,
+        spellcheck: false,
+        contextIsolation: false
+    },
+    resizable: false,
+    frame: false,
+    center: true,
+    show: false
+};
 
 /* ---------------------------- Preprocess ---------------------------- */
 app.on('ready', createWindow);
@@ -19,7 +38,7 @@ app.on('activate', () => {
 });
 
 /* ---------------------------- IpcMain ---------------------------- */
-ipcMain.on('floatPopup', data => {
+ipcMain.on('floatPopup', (e, data) => {
     makeWindow(true, data);
 });
 
@@ -30,6 +49,8 @@ function makeWindow(isModal, arg, callback = () => {}) {
     if(isBuildMode){
         url = modalUrl.replaceAll("\\", "/");
     }
+
+    console.log(url);
 
     let parentWindowId = arg.currentWindowId ? arg.currentWindowId : mainWindow.id;
     let parentWindow = BrowserWindow.fromId(parentWindowId);
@@ -164,7 +185,29 @@ function createWindow(){
     });
     mainWindow.on('ready-to-show', () => {
         mainWindow.show();
-        mainWindow.blur();
-        mainWindow.focus();
     });
+    mainWindow.on('show', () => {
+        mainWindow.minimize();
+        mainWindow.restore();
+    });
+}
+
+function getWrappingScreen(winBound){
+    let displayList = screen.getAllDisplays();
+    let centerPos = {x: winBound.x + winBound.width/2, y: winBound.y + winBound.height/2};
+
+    for(let display of displayList){
+        let dbound = display.bounds;
+
+        if(
+            centerPos.x >= dbound.x &&
+            centerPos.x < (dbound.x + dbound.width) &&
+            centerPos.y >= dbound.y &&
+            centerPos.y < (dbound.y + dbound.height)
+        ){
+            return display;
+        }
+    }
+
+    return displayList[0];
 }

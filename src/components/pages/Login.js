@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
+import IpcRouter from 'components/routers/IpcRouter';
 
 class Login extends Component{
     constructor(props){
@@ -65,7 +66,20 @@ class Login extends Component{
         if(e.keyCode === 13){
             if(this.state.account_create_mode){
                 // 계정 생성 모드
-
+                IpcRouter.floatAlert({
+                    preferredWindowProperties: {
+                        width: 240,
+                        height: 225,
+                    },
+                    dataParam: {
+                        is_warning:true,
+                        text_list: ["Credit Connect 를 종료하시겠습니까?"],
+                        confirm_button_label: "확인",
+                        cancel_button_label: '취소',
+                        cancel_origin_topic: this.cancel_callback_topic,
+                        confirm_origin_topic: this.confirm_callback_topic
+                    }
+                });
                 
             }else{
 
