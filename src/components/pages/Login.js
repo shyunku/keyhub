@@ -2,6 +2,9 @@ import React, {Component} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 
+const electron = window.require("electron");
+const {ipcRenderer} = electron;
+
 class Login extends Component{
     constructor(props){
         super(props);
@@ -12,11 +15,17 @@ class Login extends Component{
             name_input: '',
             pw_input: '',
             min_name_input_len: 3,
-            min_pw_input_len: 6
+            min_pw_input_len: 6,
+            fetched_user_list: []
         };
     }
 
     componentDidMount(){
+        IpcRouter.reflectOnce('getUserAccounts', null, data => {
+            this.setState({
+                fetched_user_list: data
+            });
+        });
     }
 
     render(){
@@ -28,14 +37,16 @@ class Login extends Component{
                         <div className="saved-accounts">
                             <div className="label">로그인할 계정 선택</div>
                             <div className="account-list">
-                                <div className="account" onClick={this.accountSelectHandler}>
-                                    <div className="name">shyunku</div>
-                                    <div className="last-time">3일전</div>
-                                </div>
-                                <div className="account" onClick={this.accountSelectHandler}>
-                                    <div className="name">션쿠</div>
-                                    <div className="last-time">어제</div>
-                                </div>
+                                {
+                                    this.state.fetched_user_list.map(user_info => {
+                                        return(
+                                            <div className="account" onClick={this.accountSelectHandler}>
+                                                <div className="name">{user_info}</div>
+                                                <div className="last-time">-일전</div>
+                                            </div>
+                                        );
+                                    })
+                                }
                                 <div className="account" onClick={this.accountCreateHandler}>
                                     <div className="name">계정 추가</div>
                                 </div>
@@ -103,7 +114,7 @@ class Login extends Component{
                 }
             }else{
                 // 기존 계정으로 로그인
-                
+
             }
         }
     }

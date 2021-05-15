@@ -1,6 +1,10 @@
 /* ---------------------------- Imports ---------------------------- */
+const fs = require('fs');
+const path = require('path');
+
 const {ipcMain, webContents, app, BrowserWindow, screen, remote, Menu} = require('electron');
 const packageJson = require('../../package.json');
+const pathManager = require('./path');
 
 /* ---------------------------- Declaration (Variables) ---------------------------- */
 const isBuildMode = !process.env.ELECTRON_START_URL;
@@ -40,6 +44,26 @@ app.on('activate', () => {
 /* ---------------------------- IpcMain ---------------------------- */
 ipcMain.on('floatPopup', (e, data) => {
     makeWindow(true, data);
+});
+
+ipcMain.on('redirect', async (e, _data) => {
+    const {topic, data} = _data;
+    ipcMain.emit(topic, data);
+});
+
+ipcMain.on('getUserAccounts', async (e, data) => {
+    const targetDir = pathManager.directory.userAccountDatabase;
+    fs.promises.readdir(targetDir).then(res => {
+        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
+        let filteredUser = filteredDatabaseList.map(entry => {
+            let testRegex = /(.+).sqlite3$/g;
+            let matchedResult = testRegex.exec(entry);
+            return matchedResult ? matchedResult[1] : '';
+        });
+        e.reply('getUserAccounts', filteredUser);
+    }).catch(err => {
+        throw err;
+    });
 });
 
 /* ---------------------------- Declaration (Functions) ---------------------------- */
@@ -206,4 +230,9 @@ function getWrappingScreen(winBound){
     }
 
     return displayList[0];
+}
+
+function respond(e, data){
+    console.log(e);
+    e.sender.send('', data);
 }
