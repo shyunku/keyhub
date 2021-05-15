@@ -1,0 +1,28 @@
+@import './variables.scss';
+
+button{
+    border: none;
+    color: white;
+    font-family: inherit;
+
+    &:hover{
+        cursor: pointer;
+    }
+    &:focus{
+        outline: none;
+    }
+}
+
+input{
+    border: none;
+    border-bottom: 2px solid $gray;
+    font-family: inherit;
+
+    &:hover{
+        border-bottom: 2px solid rgb(107, 143, 143);
+    }
+    &:focus{
+        outline: none;
+        border-bottom: 2px solid cyan;
+    }
+}

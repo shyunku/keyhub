@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+@import './variables.scss';
+
+html, body, #root{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    .page{
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    
+        .page-content{
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: auto;
+        }
+    }
+
+    *::-webkit-scrollbar {
+        width: 4px;
+        background: none;
+        scroll-behavior: smooth;
+    }
+
+    *::-webkit-scrollbar-track{
+        background-color: $extra-light-gray;
+        border-radius: 5px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background-color: $gray;
+        // background: linear-gradient(to bottom, rgb(0, 86, 216), rgb(255, 44, 255));
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background-color: $light-gray;
+        border-radius: 5px;
+    }
+}
+
+.top-action-bar{
+    display: flex;
+    justify-content: flex-end;
+    background: linear-gradient(to bottom, rgb(148, 148, 148), transparent);
+    // background-color: rgb(230, 230, 230);
+
+    -webkit-app-region: drag;
+    -webkit-user-select: none;
+    user-select: none;
+
+    .close-btn{
+        display: flex;
+        color: rgb(77, 77, 77);
+        padding: 5px 8px;
+        transition: 0.2s linear;
+
+        &:hover{
+            background: rgba(255, 0, 0, 0.589);
+            // background: linear-gradient(to bottom, red, transparent);
+            color: white;
+        }
+    }
+
+    .clickable{
+        -webkit-app-region: none;
+        -webkit-user-select: auto;
+    }
+}
+
+#login_page{
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+    box-sizing: border-box;
+    // background: url("../img/login-bg.jpeg");
+
+    .login-form{
+        display: flex;
+        flex-direction: column;
+
+        border-radius: 15px;
+        padding: 30px;
+        box-sizing: border-box;
+        
+        width: 100%;
+        max-height: 100%;
+
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.308);
+        transition: 0.15s linear;
+
+        .saved-accounts{
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            .label{
+                font-weight: bold;
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            .account-list{
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                overflow-y: scroll;
+
+                .account{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 10px;
+                    cursor: pointer;
+                    transition: 0.15s linear;
+                    align-items: center;
+
+                    &:not(:last-child){
+                        border-bottom: 1px solid rgb(202, 202, 202);
+                    }
+                    &:hover{
+                        background-color: $card-hover-color;
+                    }
+
+                    .name{
+                        font-size: 15px;
+                    }
+                    .last-time{
+                        font-size: 12px;
+                        color: $gray;
+                        font-weight: lighter;
+                    }
+                }
+            }
+        }
+        .lower-input{
+            display: flex;
+            margin-top: 20px;
+            transition: 0.15s linear;
+            // justify-content: space-between;
+
+            #name_input{
+                margin-right: 10px;
+            }
+            
+            input{
+                flex: 1;
+                border: none;
+                background: $light-gray;
+                padding: 5px 10px;
+                box-sizing: border-box;
+                color: black;
+                border: 2px solid transparent;
+                box-sizing: border-box;
+                transition: 0.15s linear;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 10px;
+
+                &::placeholder{
+                    color: $dark-gray;
+                }
+                &:focus{
+                    background: white;
+                    border: 2px solid $extra-dark-gray;
+
+                    &::placeholder{
+                        color: $gray;
+                    }
+                }
+                &.invisible{
+                    display: none;
+                }
+            }
+        }
+    }
+}
