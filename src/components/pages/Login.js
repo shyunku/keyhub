@@ -8,7 +8,11 @@ class Login extends Component{
 
         this.state = {
             item_selected: false,
-            account_create_mode: false
+            account_create_mode: false,
+            name_input: '',
+            pw_input: '',
+            min_name_input_len: 3,
+            min_pw_input_len: 6
         };
     }
 
@@ -38,8 +42,13 @@ class Login extends Component{
                             </div>
                         </div>
                         <div className="lower-input" style={{display: this.state.item_selected ? 'flex' : 'none'}}>
-                            <input id="name_input" className={this.state.account_create_mode ? '' : 'invisible'} placeholder="계정 이름을 입력하세요"></input>
+                            <input id="name_input" className={this.state.account_create_mode ? '' : 'invisible'} 
+                                value={this.state.name_input}
+                                placeholder="계정 이름을 입력하세요" 
+                                onChange={this.nameInputChangeHandler}/>
                             <input id="pw_input" type="password" placeholder="비밀번호를 입력하세요"
+                                value={this.state.pw_input}
+                                onChange={this.pwInputChangeHandler}
                                 onKeyDown={this.onPasswordInputDoneHandler}/>
                         </div>
                     </div>
@@ -62,29 +71,56 @@ class Login extends Component{
         });
     }
 
+    nameInputChangeHandler = (e) => {
+        this.setState({
+            name_input: e.target.value
+        });
+    }
+
+    pwInputChangeHandler = (e) => {
+        this.setState({
+            pw_input: e.target.value
+        });
+    }
+
     onPasswordInputDoneHandler = e => {
         if(e.keyCode === 13){
             if(this.state.account_create_mode){
-                // 계정 생성 모드
-                IpcRouter.floatAlert({
-                    preferredWindowProperties: {
-                        width: 240,
-                        height: 225,
-                    },
-                    dataParam: {
-                        is_warning:true,
-                        text_list: ["Credit Connect 를 종료하시겠습니까?"],
-                        confirm_button_label: "확인",
-                        cancel_button_label: '취소',
-                        cancel_origin_topic: this.cancel_callback_topic,
-                        confirm_origin_topic: this.confirm_callback_topic
-                    }
-                });
+                // 새로운 계정 생성
+                let warn_text = this.validateInputs();
                 
-            }else{
+                if(warn_text){
+                    IpcRouter.floatAlert({
+                        dataParam: {
+                            is_warning: true,
+                            text_list: [warn_text],
+                            use_confirm: true
+                        }
+                    });
+                }else{
+                    // 성공. 계정 정보 저장 후 로그인
 
+                }
+            }else{
+                // 기존 계정으로 로그인
+                
             }
         }
+    }
+
+    validateInputs = () => {
+        let nameInput = this.state.name_input;
+        let pwInput = this.state.pw_input;
+
+        if(nameInput.length < this.state.min_name_input_len){
+            return `계정 이름은 최소 ${this.state.min_name_input_len}자 이상이어야 합니다.`;
+        }
+
+        if(pwInput.length < this.state.min_pw_input_len){
+            return `비밀번호는 최소 ${this.state.min_pw_input_len}자 이상이어야 합니다.`;
+        }
+
+        return null;
     }
 }
 

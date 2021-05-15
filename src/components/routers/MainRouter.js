@@ -7,7 +7,8 @@ export default function MainRouter(){
     return(
         <HashRouter>
             <Switch>
-                <Route path="/" component={Login}/>
+                <Route exact path="/" component={Login}/>
+                <Route path="/login" component={Login}/>
                 <Route path="/alert" component={AlertPopup}/>
             </Switch>
         </HashRouter>

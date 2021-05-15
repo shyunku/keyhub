@@ -44,13 +44,11 @@ ipcMain.on('floatPopup', (e, data) => {
 
 /* ---------------------------- Declaration (Functions) ---------------------------- */
 function makeWindow(isModal, arg, callback = () => {}) {
-    let url = decodeURIComponent(entryUrlPrefix + '#/' + arg.url).replace(/\s/g, '');
+    let url = decodeURIComponent(entryUrlPrefix + '#' + arg.url).replace(/\s/g, '');
 
     if(isBuildMode){
         url = modalUrl.replaceAll("\\", "/");
     }
-
-    console.log(url);
 
     let parentWindowId = arg.currentWindowId ? arg.currentWindowId : mainWindow.id;
     let parentWindow = BrowserWindow.fromId(parentWindowId);
@@ -183,12 +181,10 @@ function createWindow(){
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
-    mainWindow.on('ready-to-show', () => {
+    mainWindow.once('ready-to-show', () => {
         mainWindow.show();
-    });
-    mainWindow.on('show', () => {
-        mainWindow.minimize();
-        mainWindow.restore();
+        mainWindow.hide();
+        mainWindow.show();
     });
 }
 

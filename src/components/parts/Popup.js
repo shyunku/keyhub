@@ -12,16 +12,19 @@ class AlertPopup extends React.Component{
         this.state = {
             is_warning: false,
             text_list: [],
-            confirm_button_label: null,
-            cancel_button_label: null,
-            cancel_origin_topic: null,
+            use_confirm: false,
+            use_cancel: false,
+            confirm_button_label: "확인",
+            cancel_button_label: "취소",
             confirm_origin_topic: null,
+            cancel_origin_topic: null,
             data: null
         }
     }
 
     componentDidMount(){
         ipcRenderer.on("__data_param__", (event, data) => {
+            console.log(data);
             this.setState(data);
         });
     }
@@ -57,26 +60,23 @@ class AlertPopup extends React.Component{
                 </div>
                 <div className="button-container">
                     {
-                        this.state.confirm_button_label
+                        this.state.use_confirm
                         &&
                         <button className="standard-button confirm-style-button" onClick={this.confirmButtonClickHandler}>
                             {this.state.confirm_button_label}
                         </button>
                     }
                     {
-                        this.state.cancel_button_label
+                        this.state.use_cancel
                         &&
                         <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
                             {this.state.cancel_button_label}
                         </button>
                     }
                     {
-                        !this.state.cancel_button_label
-                        &&
-                        !this.state.confirm_button_label
-                        &&
+                        !(this.state.use_confirm || this.state.use_cancel) &&
                         <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
-                            창닫기 (props 추가바람)
+                            창닫기
                         </button>
                     }
                 </div>

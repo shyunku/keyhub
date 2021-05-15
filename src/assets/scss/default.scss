@@ -2,8 +2,10 @@
 
 button{
     border: none;
-    color: white;
+    color: black;
     font-family: inherit;
+    padding: 5px 0;
+    border-radius: 5px;
 
     &:hover{
         cursor: pointer;
