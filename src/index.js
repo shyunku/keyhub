@@ -7,6 +7,7 @@ import 'assets/scss/default.scss';
 import 'assets/scss/variables.scss';
 import 'assets/scss/index.scss';
 
+
 ReactDOM.render(
   <>
     <MainRouter/>

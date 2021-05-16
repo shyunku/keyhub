@@ -4,7 +4,7 @@ const {ipcRenderer} = electron;
 const noCallbackForIpcRendererError = () => {throw new Error('No callback found for ipcRenderer.')};
 
 module.exports = {
-    floatAlert: function(popup_data){
+    floatAlert: function(popup_data, properties = {}){
         ipcRenderer.send('floatPopup', Object.assign(
             {
                 preferredWindowProperties: {
@@ -12,7 +12,10 @@ module.exports = {
                     height: 200,
                 }
             },
-            popup_data, 
+            properties,
+            {
+                dataParam: popup_data
+            }, 
             {
                 url: '/alert'
             }

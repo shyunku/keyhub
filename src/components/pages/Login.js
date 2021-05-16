@@ -1,9 +1,12 @@
 import React, {Component} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
+import {HiOutlineArrowNarrowRight} from 'react-icons/hi';
+import Util from 'assets/js/Util';
 
 const electron = window.require("electron");
 const {ipcRenderer} = electron;
+const sha256 = require('sha256');
 
 class Login extends Component{
     constructor(props){
@@ -18,6 +21,8 @@ class Login extends Component{
             min_pw_input_len: 6,
             fetched_user_list: []
         };
+
+        this.callback_create_account_confirm = Util.generateUniqueTopic('cac');
     }
 
     componentDidMount(){
@@ -26,6 +31,31 @@ class Login extends Component{
                 fetched_user_list: data
             });
         });
+
+        ipcRenderer.on('createAccount', (e, data) => {
+            if(data.success){
+                IpcRouter.floatAlert({
+                    level: 0,
+                    text_list: ['계정이 생성되었습니다.'],
+                    use_confirm: true
+                });
+            }else{
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }
+        });
+
+        ipcRenderer.on(this.callback_create_account_confirm, (e, data) => {
+            // TODO :: 홈으로 이동
+
+        });
+    }
+
+    componentWillUnmount(){
+        ipcRenderer.removeAllListeners();
     }
 
     render(){
@@ -40,7 +70,7 @@ class Login extends Component{
                                 {
                                     this.state.fetched_user_list.map(user_info => {
                                         return(
-                                            <div className="account" onClick={this.accountSelectHandler}>
+                                            <div className="account" onClick={this.accountSelectHandler} key={user_info}>
                                                 <div className="name">{user_info}</div>
                                                 <div className="last-time">-일전</div>
                                             </div>
@@ -61,6 +91,10 @@ class Login extends Component{
                                 value={this.state.pw_input}
                                 onChange={this.pwInputChangeHandler}
                                 onKeyDown={this.onPasswordInputDoneHandler}/>
+                            <div id="create_account_btn" className={this.state.account_create_mode ? '' : 'invisible'}
+                                onClick={this.createAccount}>
+                                <HiOutlineArrowNarrowRight/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -94,28 +128,36 @@ class Login extends Component{
         });
     }
 
+    createAccount = () => {
+        if(this.state.account_create_mode){
+            // 새로운 계정 생성
+            let warn_text = this.validateInputs();
+            
+            if(warn_text){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: [warn_text],
+                    use_confirm: true
+                });
+            }else{
+                // 성공. 계정 정보 저장 후 로그인
+                let nameInput = this.state.name_input;
+                let pwInput = this.state.pw_input;
+
+                ipcRenderer.send('createAccount', {
+                    name: nameInput,
+                    encrypted_pw: sha256(pwInput)
+                });
+            }
+        }else{
+            // TODO :: 기존 계정으로 로그인
+
+        }
+    }
+
     onPasswordInputDoneHandler = e => {
         if(e.keyCode === 13){
-            if(this.state.account_create_mode){
-                // 새로운 계정 생성
-                let warn_text = this.validateInputs();
-                
-                if(warn_text){
-                    IpcRouter.floatAlert({
-                        dataParam: {
-                            is_warning: true,
-                            text_list: [warn_text],
-                            use_confirm: true
-                        }
-                    });
-                }else{
-                    // 성공. 계정 정보 저장 후 로그인
-
-                }
-            }else{
-                // 기존 계정으로 로그인
-
-            }
+            this.createAccount();
         }
     }
 

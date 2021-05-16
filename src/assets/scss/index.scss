@@ -87,12 +87,16 @@ html, body, #root{
         align-items: center;
         flex: 4;
         font-size: 50px;
-        color: $warning-color;
+
+        &.level-0{color: $confirm-color;}
+        &.level-1{color: $warning-color;}
+        &.level-2{color: $error-color;}
     }
     .text-wrapper{
         text-align: center;
         font-size: 13px;
         margin: 10px 0;
+        line-height: 18px;
         flex: 1;
     }
     .button-container{
@@ -150,7 +154,7 @@ html, body, #root{
                 display: flex;
                 flex-direction: column;
                 flex: 1;
-                overflow-y: scroll;
+                overflow-y: auto;
 
                 .account{
                     display: flex;
@@ -187,7 +191,26 @@ html, body, #root{
             #name_input{
                 margin-right: 10px;
             }
-            
+            #create_account_btn{
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: $light-gray;
+                margin-left: 10px;
+                border-radius: 10px;
+                padding: 0 8px;
+                cursor: pointer;
+                transition: 0.15s linear;
+                font-size: 18px;
+
+                &:hover{
+                    background-color: $main-theme-color-light;
+                    color: white;
+                }
+                &.invisible{
+                    display: none;
+                }
+            }
             input{
                 flex: 1;
                 border: none;

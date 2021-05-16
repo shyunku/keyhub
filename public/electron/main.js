@@ -45,12 +45,10 @@ app.on('activate', () => {
 ipcMain.on('floatPopup', (e, data) => {
     makeWindow(true, data);
 });
-
 ipcMain.on('redirect', async (e, _data) => {
     const {topic, data} = _data;
     ipcMain.emit(topic, data);
 });
-
 ipcMain.on('getUserAccounts', async (e, data) => {
     const targetDir = pathManager.directory.userAccountDatabase;
     fs.promises.readdir(targetDir).then(res => {
@@ -62,7 +60,36 @@ ipcMain.on('getUserAccounts', async (e, data) => {
         });
         e.reply('getUserAccounts', filteredUser);
     }).catch(err => {
-        throw err;
+        ipcMain.broadcast('error', err);
+    });
+});
+
+ipcMain.on('createAccount', (e, data) => {
+    const {name, encrypted_pw} = data;
+    
+    const targetDir = pathManager.directory.userAccountDatabase;
+    fs.promises.readdir(targetDir).then(res => {
+        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
+        let filteredUser = filteredDatabaseList.map(entry => {
+            let testRegex = /(.+).sqlite3$/g;
+            let matchedResult = testRegex.exec(entry);
+            return matchedResult ? matchedResult[1] : '';
+        });
+
+        if(filteredUser.includes(name)){
+            e.reply('createAccount', {
+                success: false,
+                message: '이미 사용 중인 계정 이름입니다.'
+            });
+        }else{
+            // TODO :: 계정 저장
+
+            e.reply('createAccount', {
+                success: true,
+            });
+        }
+    }).catch(err => {
+        ipcMain.broadcast('error', err);
     });
 });
 
@@ -232,7 +259,9 @@ function getWrappingScreen(winBound){
     return displayList[0];
 }
 
-function respond(e, data){
-    console.log(e);
-    e.sender.send('', data);
+// Ipc Message Broadcast
+ipcMain.broadcast = function(topic, data) {
+    for(let window of BrowserWindow.getAllWindows()){
+        window.webContents.send(topic, data);
+    }
 }

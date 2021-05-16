@@ -1,5 +1,6 @@
 import React from 'react';
 import {IoWarningOutline, IoCheckmarkCircle} from 'react-icons/io5';
+import {VscError} from 'react-icons/vsc';
 
 const ipcRouter = require('components/parts/Popup');
 const electron = window.require("electron");
@@ -10,7 +11,7 @@ class AlertPopup extends React.Component{
         super(props);
 
         this.state = {
-            is_warning: false,
+            level: 0,
             text_list: [],
             use_confirm: false,
             use_cancel: false,
@@ -46,8 +47,14 @@ class AlertPopup extends React.Component{
     render() {
         return (
             <div className="alert-popup">
-                <div className="popup-level-image-wrapper">
-                    {this.state.is_warning ? <IoWarningOutline/> : <IoCheckmarkCircle/>}
+                <div className={"popup-level-image-wrapper " + `level-${this.state.level}`}>
+                    {
+                        {
+                            0: <IoCheckmarkCircle/>,
+                            1: <IoWarningOutline/>,
+                            2: <VscError/>
+                        }[this.state.level]
+                    }
                 </div>
                 <div className="text-wrapper">
                     {
