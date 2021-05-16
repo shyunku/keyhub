@@ -77,6 +77,10 @@ ipcMain.on('createAccount', (e, data) => {
             });
         }else{
             // TODO :: 계정 저장
+            fs.copyFileSync(
+                pathManager.path.userTemplateDB, 
+                pathManager.directory.userAccountDatabase + '/' + name + '.sqlite3'
+            );
 
             e.reply('createAccount', {
                 success: true,
