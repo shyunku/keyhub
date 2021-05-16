@@ -1,15 +1,17 @@
 /* ---------------------------- Imports ---------------------------- */
 const fs = require('fs');
 const path = require('path');
-
 const {ipcMain, webContents, app, BrowserWindow, screen, remote, Menu} = require('electron');
+
 const packageJson = require('../../package.json');
 const pathManager = require('./path');
+const sqlite = require('./sqlite');
 
 /* ---------------------------- Declaration (Variables) ---------------------------- */
 const isBuildMode = !process.env.ELECTRON_START_URL;
 let mainWindow = null;
 let entryUrlPrefix = 'http://localhost:3000/';
+let coreDB, userDB;
 const defaultWindowProperties = {
     width: 500,
     height: 500,
@@ -29,6 +31,11 @@ const defaultWindowProperties = {
 };
 
 /* ---------------------------- Preprocess ---------------------------- */
+sqlite.getCoreDatabaseContext(context => {
+    coreDB = context;
+});
+console.log("Electron connected to ", entryUrlPrefix);
+
 app.on('ready', createWindow);
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -47,36 +54,23 @@ ipcMain.on('floatPopup', (e, data) => {
 });
 ipcMain.on('redirect', async (e, _data) => {
     const {topic, data} = _data;
-    ipcMain.emit(topic, data);
+    ipcMain.broadcast(topic, data);
 });
 ipcMain.on('getUserAccounts', async (e, data) => {
     const targetDir = pathManager.directory.userAccountDatabase;
-    fs.promises.readdir(targetDir).then(res => {
-        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
-        let filteredUser = filteredDatabaseList.map(entry => {
-            let testRegex = /(.+).sqlite3$/g;
-            let matchedResult = testRegex.exec(entry);
-            return matchedResult ? matchedResult[1] : '';
-        });
-        e.reply('getUserAccounts', filteredUser);
-    }).catch(err => {
-        ipcMain.broadcast('error', err);
+    fetchUserDatabaseNames(users => {
+        e.reply('getUserAccounts', users);
     });
 });
 
 ipcMain.on('createAccount', (e, data) => {
     const {name, encrypted_pw} = data;
-    
     const targetDir = pathManager.directory.userAccountDatabase;
-    fs.promises.readdir(targetDir).then(res => {
-        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
-        let filteredUser = filteredDatabaseList.map(entry => {
-            let testRegex = /(.+).sqlite3$/g;
-            let matchedResult = testRegex.exec(entry);
-            return matchedResult ? matchedResult[1] : '';
-        });
 
-        if(filteredUser.includes(name)){
+    fetchUserDatabaseNames(users => {
+        e.reply('getUserAccounts', users);
+
+        if(users.includes(name)){
             e.reply('createAccount', {
                 success: false,
                 message: '이미 사용 중인 계정 이름입니다.'
@@ -88,8 +82,6 @@ ipcMain.on('createAccount', (e, data) => {
                 success: true,
             });
         }
-    }).catch(err => {
-        ipcMain.broadcast('error', err);
     });
 });
 
@@ -257,6 +249,20 @@ function getWrappingScreen(winBound){
     }
 
     return displayList[0];
+}
+
+function fetchUserDatabaseNames(resolve){
+    fs.promises.readdir(targetDir).then(res => {
+        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
+        let filteredUser = filteredDatabaseList.map(entry => {
+            let testRegex = /(.+).sqlite3$/g;
+            let matchedResult = testRegex.exec(entry);
+            return matchedResult ? matchedResult[1] : '';
+        });
+        resolve(filteredUser);
+    }).catch(err => {
+        throw err;
+    });
 }
 
 // Ipc Message Broadcast

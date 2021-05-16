@@ -19,6 +19,7 @@ input{
     border: none;
     border-bottom: 2px solid $gray;
     font-family: inherit;
+    min-width: 0;
 
     &:hover{
         border-bottom: 2px solid rgb(107, 143, 143);

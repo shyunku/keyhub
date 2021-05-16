@@ -4,6 +4,21 @@ const {ipcRenderer} = electron;
 const noCallbackForIpcRendererError = () => {throw new Error('No callback found for ipcRenderer.')};
 
 module.exports = {
+    redirect: function(topic, data){
+        ipcRenderer.send('redirect', {topic: topic, data: data});
+    },
+    reflect: function(topic, data, callback = noCallbackForIpcRendererError){
+        ipcRenderer.send(topic, data);
+        ipcRenderer.on(topic, (e, data) => {
+            callback(data);
+        });
+    },
+    reflectOnce: function(topic, data, callback = noCallbackForIpcRendererError){
+        ipcRenderer.send(topic, data);
+        ipcRenderer.once(topic, (e, data) => {
+            callback(data);
+        });
+    },
     floatAlert: function(popup_data, properties = {}){
         ipcRenderer.send('floatPopup', Object.assign(
             {
@@ -21,19 +36,24 @@ module.exports = {
             }
         ));
     },
-    redirect: function(topic, data){
-        ipcRenderer.send('redirect', {topic: topic, data: data});
+    floatAsk: function(popup_data, properties = {}){
+        let texts = popup_data?.text_list.length || 0;
+        let jsxs = popup_data?.jsx?.length || 0;
+        let height = 120 + texts * 20 + jsxs * 30;
+        ipcRenderer.send('floatPopup', Object.assign(
+            {
+                preferredWindowProperties: {
+                    width: 300,
+                    height: height,
+                }
+            },
+            properties,
+            {
+                dataParam: popup_data
+            }, 
+            {
+                url: '/ask'
+            }
+        ));
     },
-    reflect: function(topic, data, callback = noCallbackForIpcRendererError){
-        ipcRenderer.send(topic, data);
-        ipcRenderer.on(topic, (e, data) => {
-            callback(data);
-        });
-    },
-    reflectOnce: function(topic, data, callback = noCallbackForIpcRendererError){
-        ipcRenderer.send(topic, data);
-        ipcRenderer.once(topic, (e, data) => {
-            callback(data);
-        });
-    }
 };

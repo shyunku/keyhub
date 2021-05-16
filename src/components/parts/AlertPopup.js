@@ -1,8 +1,8 @@
+import IpcRouter from 'components/routers/IpcRouter';
 import React from 'react';
 import {IoWarningOutline, IoCheckmarkCircle} from 'react-icons/io5';
 import {VscError} from 'react-icons/vsc';
 
-const ipcRouter = require('components/parts/Popup');
 const electron = window.require("electron");
 const {ipcRenderer} = electron;
 
@@ -17,36 +17,35 @@ class AlertPopup extends React.Component{
             use_cancel: false,
             confirm_button_label: "확인",
             cancel_button_label: "취소",
-            confirm_origin_topic: null,
-            cancel_origin_topic: null,
+            confirm_topic: null,
+            cancel_topic: null,
             data: null
         }
     }
 
     componentDidMount(){
         ipcRenderer.on("__data_param__", (event, data) => {
-            console.log(data);
             this.setState(data);
         });
     }
 
     confirmButtonClickHandler = () => {
-        if(this.state.confirm_origin_topic){
-            ipcRouter.redirect(this.state.confirm_origin_topic, this.state.data);
+        if(this.state.confirm_topic){
+            IpcRouter.redirect(this.state.confirm_topic, this.state.data);
         }
         electron.remote.getCurrentWindow().close();
     }
 
     cancelButtonClickHandler = () => {
-        if(this.state.cancel_origin_topic){
-            ipcRouter.redirect(this.state.cancel_origin_topic, this.state.data);
+        if(this.state.cancel_topic){
+            IpcRouter.redirect(this.state.cancel_topic, this.state.data);
         }
         electron.remote.getCurrentWindow().close();
     }
 
     render() {
         return (
-            <div className="alert-popup">
+            <div className="popup">
                 <div className={"popup-level-image-wrapper " + `level-${this.state.level}`}>
                     {
                         {

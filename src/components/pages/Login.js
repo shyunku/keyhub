@@ -37,7 +37,8 @@ class Login extends Component{
                 IpcRouter.floatAlert({
                     level: 0,
                     text_list: ['계정이 생성되었습니다.'],
-                    use_confirm: true
+                    use_confirm: true,
+                    confirm_topic: this.callback_create_account_confirm
                 });
             }else{
                 IpcRouter.floatAlert({
@@ -49,8 +50,7 @@ class Login extends Component{
         });
 
         ipcRenderer.on(this.callback_create_account_confirm, (e, data) => {
-            // TODO :: 홈으로 이동
-
+            this.props.history.push('/home');
         });
     }
 
@@ -150,8 +150,8 @@ class Login extends Component{
                 });
             }
         }else{
-            // TODO :: 기존 계정으로 로그인
-
+            // TODO :: 기존 계정으로 로그인 (validatd pw)
+            this.props.history.push('/home');
         }
     }
 
