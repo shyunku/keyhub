@@ -76,6 +76,7 @@ ipcMain.on('authenticate', (e, data) => {
             let submit = sha256(encrypted_pw);
 
             if(answer === submit){
+                setSubjectUserDB(userInfo.name);
                 e.reply('authenticate', {
                     success: true,
                 });
@@ -110,6 +111,8 @@ ipcMain.on('createAccount', (e, data) => {
                     pathManager.directory.userAccountDatabase + '/' + name + '.sqlite3'
                 );
 
+                setSubjectUserDB(name);
+
                 e.reply('createAccount', {
                     success: true,
                 });
@@ -117,6 +120,13 @@ ipcMain.on('createAccount', (e, data) => {
         }
     });
 });
+ipcMain.on('getAllFoldersByFid', (e, data) => {
+    const {cur_fid} = data;
+    userQuery.getAllFoldersByFid(cur_fid, res => {
+        e.reply('getAllFoldersByFid', res);
+    });
+});
+
 
 /* ---------------------------- Declaration (Functions) ---------------------------- */
 function makeWindow(isModal, arg, callback = () => {}) {
@@ -282,6 +292,13 @@ function getWrappingScreen(winBound){
     }
 
     return displayList[0];
+}
+
+function setSubjectUserDB(name){
+    sqlite.getUserDatabaseContext(name, context => {
+        userDB = context;
+        userQuery = userQueryLib(userDB);
+    });
 }
 
 function fetchUserMap(resolve){
