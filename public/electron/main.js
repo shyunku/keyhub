@@ -7,11 +7,15 @@ const packageJson = require('../../package.json');
 const pathManager = require('./path');
 const sqlite = require('./sqlite');
 
+const coreQueryLib = require('./core-query');
+const userQueryLib = require('./user-query');
+
 /* ---------------------------- Declaration (Variables) ---------------------------- */
 const isBuildMode = !process.env.ELECTRON_START_URL;
 let mainWindow = null;
 let entryUrlPrefix = 'http://localhost:3000/';
 let coreDB, userDB;
+let coreQuery, userQuery;
 const defaultWindowProperties = {
     width: 500,
     height: 500,
@@ -33,6 +37,7 @@ const defaultWindowProperties = {
 /* ---------------------------- Preprocess ---------------------------- */
 sqlite.getCoreDatabaseContext(context => {
     coreDB = context;
+    coreQuery = coreQueryLib(coreDB);
 });
 console.log("Electron connected to ", entryUrlPrefix);
 
@@ -57,20 +62,19 @@ ipcMain.on('redirect', async (e, _data) => {
     ipcMain.broadcast(topic, data);
 });
 ipcMain.on('getUserAccounts', async (e, data) => {
-    const targetDir = pathManager.directory.userAccountDatabase;
-    fetchUserDatabaseNames(users => {
-        e.reply('getUserAccounts', users);
+    fetchUserInfo(userInfo => {
+        e.reply('getUserAccounts', userInfo);
     });
 });
-
+ipcMain.on('setSubjectUser', (e, data) => {
+    const {name} = data;
+    
+});
 ipcMain.on('createAccount', (e, data) => {
     const {name, encrypted_pw} = data;
-    const targetDir = pathManager.directory.userAccountDatabase;
 
-    fetchUserDatabaseNames(users => {
-        e.reply('getUserAccounts', users);
-
-        if(users.includes(name)){
+    fetchUserInfo(userInfo => {
+        if(userInfo.find(e => e.name === name)){
             e.reply('createAccount', {
                 success: false,
                 message: '이미 사용 중인 계정 이름입니다.'
@@ -255,17 +259,53 @@ function getWrappingScreen(winBound){
     return displayList[0];
 }
 
-function fetchUserDatabaseNames(resolve){
-    fs.promises.readdir(targetDir).then(res => {
-        let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
-        let filteredUser = filteredDatabaseList.map(entry => {
-            let testRegex = /(.+).sqlite3$/g;
-            let matchedResult = testRegex.exec(entry);
-            return matchedResult ? matchedResult[1] : '';
+function fetchUserInfo(resolve){
+    const targetDir = pathManager.directory.userAccountDatabase;
+    coreQuery.getUserInfo(dbRes => {
+        fs.promises.readdir(targetDir).then(res => {
+            let filteredDatabaseList = res.filter(entry => entry.search(/(.+).sqlite3$/g) !== -1);
+            let filteredUser = filteredDatabaseList.map(entry => {
+                let testRegex = /(.+).sqlite3$/g;
+                let matchedResult = testRegex.exec(entry);
+                return matchedResult ? matchedResult[1] : '';
+            });
+            let userInfoFromDatabases = filteredUser.map(entry => {
+                let filePath = targetDir + '/' + entry + '.sqlite3';
+                let modifiedTime = fs.statSync(filePath).mtime.getTime();
+                return {
+                    name: entry,
+                    last_modified_time: modifiedTime
+                }
+            });
+
+            let userMap = dbRes.reduce((acc, cur) => {
+                // DB에는 있는데 데이터 파일 존재하지 않음으로 표시
+                cur.db_exists = false;
+                cur.last_modified_time = null;
+                acc[cur.name] = cur;
+                return acc;
+            }, {});
+
+            for(let fuserInfo of userInfoFromDatabases){
+                let fName = fuserInfo.name;
+                if(userMap.hasOwnProperty(fName)){
+                    // DB에 있고 데이터 파일 존재 시
+                    userMap[fName].db_exists = true;
+                }else{
+                    // DB에는 없는데 데이터 파일 존재 시
+                    userMap[fName] = {
+                        name: fName,
+                        db_exists: false
+                    };
+                }
+                userMap[fName].last_modified_time = fuserInfo.last_modified_time;
+            }
+
+            let userInfoArr = Object.values(userMap);
+            resolve(userInfoArr);
+        }).catch(err => {
+            throw err;
         });
-        resolve(filteredUser);
-    }).catch(err => {
-        throw err;
     });
 }
 

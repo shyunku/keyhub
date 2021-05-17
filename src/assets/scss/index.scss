@@ -229,6 +229,12 @@ html, body, #root{
 
                     .name{
                         font-size: 15px;
+                        margin-right: 5px;
+                    }
+                    .db-not-exists{
+                        color: red;
+                        font-size: 15px;
+                        flex: 1;
                     }
                     .last-time{
                         font-size: 12px;

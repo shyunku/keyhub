@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import {HiOutlineArrowNarrowRight} from 'react-icons/hi';
+import {RiErrorWarningLine} from 'react-icons/ri';
 import Util from 'assets/js/Util';
 
 const electron = window.require("electron");
@@ -71,8 +72,14 @@ class Login extends Component{
                                     this.state.fetched_user_list.map(user_info => {
                                         return(
                                             <div className="account" onClick={this.accountSelectHandler} key={user_info}>
-                                                <div className="name">{user_info}</div>
-                                                <div className="last-time">-일전</div>
+                                                <div className="name">{user_info.name}</div>
+                                                {
+                                                    !user_info.db_exists &&
+                                                    <div className="db-not-exists" title="데이터베이스가 없습니다.">
+                                                        <RiErrorWarningLine/>
+                                                    </div>
+                                                }
+                                                <div className="last-time">{Util.relativeTime(user_info.last_modified_time)}</div>
                                             </div>
                                         );
                                     })
