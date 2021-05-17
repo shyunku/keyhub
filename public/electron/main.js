@@ -1,6 +1,7 @@
 /* ---------------------------- Imports ---------------------------- */
 const fs = require('fs');
 const path = require('path');
+const sha256 = require('sha256');
 const {ipcMain, webContents, app, BrowserWindow, screen, remote, Menu} = require('electron');
 
 const packageJson = require('../../package.json');
@@ -66,9 +67,31 @@ ipcMain.on('getUserAccounts', async (e, data) => {
         e.reply('getUserAccounts', userInfo);
     });
 });
-ipcMain.on('setSubjectUser', (e, data) => {
-    const {name} = data;
-    
+ipcMain.on('authenticate', (e, data) => {
+    const {user_id, encrypted_pw} = data;
+    fetchUserMap(userMap => {
+        if(userMap.hasOwnProperty(user_id)){
+            let userInfo = userMap[user_id];
+            let answer = userInfo.encrypted_pw;
+            let submit = sha256(encrypted_pw);
+
+            if(answer === submit){
+                e.reply('authenticate', {
+                    success: true,
+                });
+            }else{
+                e.reply('authenticate', {
+                    success: false,
+                    message: '비밀번호가 틀렸습니다.'
+                });
+            }
+        }else{
+            e.reply('authenticate', {
+                success: false,
+                message: '존재하지 않는 유저입니다.'
+            });
+        }
+    });
 });
 ipcMain.on('createAccount', (e, data) => {
     const {name, encrypted_pw} = data;
@@ -81,13 +104,15 @@ ipcMain.on('createAccount', (e, data) => {
             });
         }else{
             // TODO :: 계정 저장
-            fs.copyFileSync(
-                pathManager.path.userTemplateDB, 
-                pathManager.directory.userAccountDatabase + '/' + name + '.sqlite3'
-            );
+            coreQuery.createUser(name, sha256(encrypted_pw), () => {
+                fs.copyFileSync(
+                    pathManager.path.userTemplateDB, 
+                    pathManager.directory.userAccountDatabase + '/' + name + '.sqlite3'
+                );
 
-            e.reply('createAccount', {
-                success: true,
+                e.reply('createAccount', {
+                    success: true,
+                });
             });
         }
     });
@@ -257,6 +282,19 @@ function getWrappingScreen(winBound){
     }
 
     return displayList[0];
+}
+
+function fetchUserMap(resolve){
+    fetchUserInfo(userInfoArr => {
+        userInfoArr.reduce((acc, cur) => {
+            if(cur.user_id){
+                acc[cur.user_id] = cur;
+            }
+            return acc;
+        }, {});
+
+        resolve(userInfoArr);
+    });
 }
 
 function fetchUserInfo(resolve){

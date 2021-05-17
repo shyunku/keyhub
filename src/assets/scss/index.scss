@@ -226,6 +226,10 @@ html, body, #root{
                     &:hover{
                         background-color: $main-theme-color-most-light;
                     }
+                    &.selected{
+                        background-color: $main-theme-color;
+                        color: white;
+                    }
 
                     .name{
                         font-size: 15px;

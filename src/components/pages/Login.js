@@ -16,6 +16,7 @@ class Login extends Component{
         this.state = {
             item_selected: false,
             account_create_mode: false,
+            selected_account_id: null,
             name_input: '',
             pw_input: '',
             min_name_input_len: 3,
@@ -50,6 +51,18 @@ class Login extends Component{
             }
         });
 
+        ipcRenderer.on('authenticate', (e, data) => {
+            if(data.success){
+                this.props.history.push('/home');
+            }else{
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }
+        });
+
         ipcRenderer.on(this.callback_create_account_confirm, (e, data) => {
             this.props.history.push('/home');
         });
@@ -71,7 +84,8 @@ class Login extends Component{
                                 {
                                     this.state.fetched_user_list.map(user_info => {
                                         return(
-                                            <div className="account" onClick={this.accountSelectHandler} key={user_info}>
+                                            <div className={"account " + (this.state.selected_account_id === user_info.user_id ? 'selected' : '')}
+                                                onClick={user_info.db_exists ? e => this.accountSelectHandler(user_info.user_id) : null} key={user_info}>
                                                 <div className="name">{user_info.name}</div>
                                                 {
                                                     !user_info.db_exists &&
@@ -84,7 +98,7 @@ class Login extends Component{
                                         );
                                     })
                                 }
-                                <div className="account" onClick={this.accountCreateHandler}>
+                                <div className={"account " + (this.state.account_create_mode ? 'selected' : '')} onClick={this.accountCreateHandler}>
                                     <div className="name">계정 추가</div>
                                 </div>
                             </div>
@@ -109,17 +123,19 @@ class Login extends Component{
         );
     }
 
-    accountSelectHandler = () => {
+    accountSelectHandler = (account_id) => {
         this.setState({
             item_selected: true,
-            account_create_mode: false
+            account_create_mode: false,
+            selected_account_id: account_id
         });
     }
     
     accountCreateHandler = () => {
         this.setState({
             item_selected: true,
-            account_create_mode: true
+            account_create_mode: true,
+            selected_account_id: null
         });
     }
 
@@ -158,8 +174,17 @@ class Login extends Component{
             }
         }else{
             // TODO :: 기존 계정으로 로그인 (validatd pw)
-            this.props.history.push('/home');
+            let pwInput = this.state.pw_input;
+            let selectedUserId = this.state.selected_account_id;
+            this.authenticate(selectedUserId, pwInput);
         }
+    }
+
+    authenticate = (id, pw) => {
+        ipcRenderer.send('authenticate', {
+            user_id: id,
+            encrypted_pw: sha256(pw)
+        });
     }
 
     onPasswordInputDoneHandler = e => {
