@@ -332,7 +332,8 @@ html, body, #root{
     display: flex;
 
     .container{
-        box-shadow: $std-box-shadow;
+        // box-shadow: $std-box-shadow;
+        border: 1px solid rgb(206, 206, 206);
         border-radius: 10px;
         height: 100%;
         overflow: hidden;
@@ -520,6 +521,79 @@ html, body, #root{
         }
     }
     .right-part{
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        box-sizing: border-box;
         flex: 3;
+
+        .info-container{
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+
+            .item-path{
+                font-size: 11px;
+                color: $light-gray;
+            }
+            .item-summary{
+                display: flex;
+                justify-content: flex-start;
+                align-items: flex-end;
+                width: 100%;
+                padding: 8px 0;
+
+                .item-name{
+                    font-size: 25px;
+                    font-weight: bold;
+                }
+                .item-representives{
+                    margin-left: 5px;
+                    font-size: 13px;
+                    color: gray;
+                }
+            }
+            .contents{
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+
+                .tab-list{
+                    display: flex;
+                    margin-top: 15px;
+                    padding-left: 10px;
+
+                    .tab{
+                        cursor: pointer;
+
+                        padding: 7px 15px;
+                        font-size: 14px;
+                        margin-right: 5px;
+                        background-color: white;
+                        // border-top: 1px solid $gray;
+                        // border-left: 1px solid $gray;
+                        // border-right: 1px solid $gray;
+                        box-shadow: $std-box-shadow-super-narrow;
+
+                        border-top-left-radius: 5px;
+                        border-top-right-radius: 5px;
+
+                        &:hover{
+                            background-color: $main-theme-color-most-light;
+                        }
+                        &.selected{
+                            background-color: $main-theme-color;
+                            color: white;
+                        }
+                    }
+                }
+                .main-content{
+                    flex: 1;
+                    border: 1px solid $light-gray;
+                    background-color: white;
+                }
+            }
+        }
     }
 }

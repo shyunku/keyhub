@@ -23,8 +23,11 @@ class Home extends Component{
             search_keyword: '',
             folder_hierarchy_list: [this.root_folder],
             cur_fid: null,
+            cur_iid: null,
             folders: [],
-            items: []
+            items: [],
+            selected_item: null,
+            item_tab: 'keypair'
         };
 
         window.document.title = 'keyhub';
@@ -91,7 +94,7 @@ class Home extends Component{
     }
 
     render(){
-        const {folder_hierarchy_list} = this.state;
+        const {folder_hierarchy_list, cur_iid, selected_item} = this.state;
 
         return(
             <div className="page">
@@ -124,7 +127,7 @@ class Home extends Component{
                                             }
                                             {
                                                 this.state.items.map(item => (
-                                                    <div className="entry-item" key={item.iid}>
+                                                    <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}>
                                                         <div className="name">{item.name}</div>
                                                     </div>
                                                 ))
@@ -172,7 +175,30 @@ class Home extends Component{
                         }
                     </div>
                     <div className="right-part container">
-
+                    {
+                        cur_iid ?
+                        <div className="folder-item info-container">
+                            <div className="item-path">{"일반 > 전체 > 게임 > 리그오브레전드"}</div>
+                            <div className="item-summary">
+                                <div className="item-name">{selected_item.name}</div>
+                                <div className="item-representives">생성: {Util.relativeTime(selected_item.created_timestamp)}</div>
+                            </div>
+                            <div className="contents">
+                                <div className="tab-list">
+                                    <div className="tab selected">키페어</div>
+                                    <div className="tab">자세히</div>
+                                </div>
+                                <div className="main-content">
+                                    {/* 메인 컨텐츠 */}
+                                </div>
+                            </div>
+                        </div> :
+                        <div className="item-info info-container">
+                            <div>폴더 이름</div>
+                            <div>생성시간</div>
+                            <div>블라블라</div>
+                        </div>
+                    }
                     </div>
                 </div>
             </div>
@@ -198,6 +224,13 @@ class Home extends Component{
         this.syncFolderItems(folder.fid);
     }
 
+    revealItem = item => {
+        this.setState({
+            cur_iid: item.iid,
+            selected_item: item
+        });
+    }
+
     backPathHistory = () => {
         let {folder_hierarchy_list} = this.state;
         folder_hierarchy_list.splice(-1, 1);
@@ -211,7 +244,6 @@ class Home extends Component{
     }
 
     syncFolderItems = (cur_fid) => {
-        // TODO :: 해당 위치의 항목 가져오기
         ipcRenderer.send('getAllFoldersByFid', {
             cur_fid: cur_fid
         });

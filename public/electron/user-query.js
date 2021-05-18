@@ -24,7 +24,7 @@ module.exports = function(db){
             });
         },
         createItem: function(fid, name, resolve){
-            db.run(`INSERT INTO item_master(fid, name) VALUES(?, ?);`, [fid, name], err => {
+            db.run(`INSERT INTO item_master(fid, name, created_timestamp) VALUES(?, ?, ?);`, [fid, name, new Date().getTime()], err => {
                 if(err){
                     console.error(err);
                     resolve(false);
