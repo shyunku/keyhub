@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import {HiOutlineArrowNarrowRight} from 'react-icons/hi';
@@ -25,6 +25,9 @@ class Login extends Component{
         };
 
         this.callback_create_account_confirm = Util.generateUniqueTopic('cac');
+
+        this.name_input_ref = createRef();
+        this.pw_input_ref = createRef();
     }
 
     componentDidMount(){
@@ -85,7 +88,8 @@ class Login extends Component{
                                     this.state.fetched_user_list.map(user_info => {
                                         return(
                                             <div className={"account " + (this.state.selected_account_id === user_info.user_id ? 'selected' : '')}
-                                                onClick={user_info.db_exists ? e => this.accountSelectHandler(user_info.user_id) : null} key={user_info}>
+                                                onClick={user_info.db_exists ? e => this.accountSelectHandler(user_info.user_id) : null} 
+                                                key={user_info.user_id}>
                                                 <div className="name">{user_info.name}</div>
                                                 {
                                                     !user_info.db_exists &&
@@ -104,11 +108,11 @@ class Login extends Component{
                             </div>
                         </div>
                         <div className="lower-input" style={{display: this.state.item_selected ? 'flex' : 'none'}}>
-                            <input id="name_input" className={this.state.account_create_mode ? '' : 'invisible'} 
+                            <input id="name_input" ref={this.name_input_ref} className={this.state.account_create_mode ? '' : 'invisible'} 
                                 value={this.state.name_input}
                                 placeholder="계정 이름을 입력하세요" 
                                 onChange={this.nameInputChangeHandler}/>
-                            <input id="pw_input" type="password" placeholder="비밀번호를 입력하세요"
+                            <input id="pw_input" ref={this.pw_input_ref} type="password" placeholder="비밀번호를 입력하세요"
                                 value={this.state.pw_input}
                                 onChange={this.pwInputChangeHandler}
                                 onKeyDown={this.onPasswordInputDoneHandler}/>
@@ -124,18 +128,24 @@ class Login extends Component{
     }
 
     accountSelectHandler = (account_id) => {
+        this.pw_input_ref.current.focus();
         this.setState({
             item_selected: true,
             account_create_mode: false,
-            selected_account_id: account_id
+            selected_account_id: account_id,
+            name_input: '',
+            pw_input: ''
         });
     }
     
     accountCreateHandler = () => {
+        this.name_input_ref.current.focus();
         this.setState({
             item_selected: true,
             account_create_mode: true,
-            selected_account_id: null
+            selected_account_id: null,
+            name_input: '',
+            pw_input: ''
         });
     }
 

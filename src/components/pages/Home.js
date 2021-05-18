@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import {IoMdClose} from 'react-icons/io';
-import {IoIosArrowForward} from 'react-icons/io';
+import {IoMdClose, IoIosArrowForward} from 'react-icons/io';
+import {IoChevronBack} from 'react-icons/io5';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import Util from 'assets/js/Util';
@@ -27,7 +27,10 @@ class Home extends Component{
             items: []
         };
 
+        window.document.title = 'keyhub';
+
         this.callback_create_folder_confirm = Util.generateUniqueTopic('create-folder');
+        this.callback_create_item_confirm = Util.generateUniqueTopic('create-item');
     }
 
     componentDidMount(){
@@ -35,17 +38,56 @@ class Home extends Component{
 
         ipcRenderer.on(this.callback_create_folder_confirm, (e, data) => {
             let itemName = data.create_item_input;
-            
+            ipcRenderer.send('createFolder', {
+                name: itemName,
+                fid: this.state.cur_fid
+            });
         });
-
+        ipcRenderer.on(this.callback_create_item_confirm, (e, data) => {
+            let itemName = data.create_item_input;
+            ipcRenderer.send('createItem', {
+                name: itemName,
+                fid: this.state.cur_fid
+            });
+        });
         ipcRenderer.on('getAllFoldersByFid', (e, data) => {
-            console.log(data);
             this.setState({
                 folders: data
             });
         });
+        ipcRenderer.on('getAllItemsByFid', (e, data) => {
+            this.setState({
+                items: data
+            });
+        });
+        ipcRenderer.on('createFolder', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
+        ipcRenderer.on('createItem', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
 
         this.syncFolderItems(null);
+    }
+
+    componentWillUnmount(){
+        ipcRenderer.removeAllListeners();
     }
 
     render(){
@@ -65,6 +107,12 @@ class Home extends Component{
                             {
                                 key:
                                     <>
+                                        {
+                                            this.state.cur_fid !== null &&
+                                            <div className="navigator">
+                                                <div className="back-btn" onClick={this.backPathHistory}><IoChevronBack/>상위 폴더로 가기</div>
+                                            </div>
+                                        }
                                         <div className="entries">
                                             {
                                                 this.state.folders.map(folder => (
@@ -74,12 +122,20 @@ class Home extends Component{
                                                     </div>
                                                 ))
                                             }
+                                            {
+                                                this.state.items.map(item => (
+                                                    <div className="entry-item" key={item.iid}>
+                                                        <div className="name">{item.name}</div>
+                                                    </div>
+                                                ))
+                                            }
                                             <div className="create">
                                                 <div className="add" onClick={this.createFolder}>폴더 추가</div>
-                                                <div className="add">항목 추가</div>
+                                                <div className="add" onClick={this.createItem}>항목 추가</div>
                                             </div>
                                         </div>
                                         <div className="route-path">
+                                            <div className="path-list">
                                             {
                                                 folder_hierarchy_list.map((f, ind) => {
                                                     return (
@@ -96,6 +152,7 @@ class Home extends Component{
                                                     );
                                                 })
                                             }
+                                            </div>
                                         </div>
                                         <div className="search-wrapper">
                                             <input placeholder="항목을 검색하세요..." onChange={this.searchInputHandler} 
@@ -123,13 +180,13 @@ class Home extends Component{
     }
 
     enterFolder = folder => {
-        const {folder_hierarchy_list} = this.state;
+        let {folder_hierarchy_list} = this.state;
         let finder = f => f.fid === folder.fid;
 
         if(folder_hierarchy_list.find(finder)){
             // history에 폴더 존재
             let history_index = folder_hierarchy_list.findIndex(finder);
-            folder_hierarchy_list.slice(0, history_index - 1);
+            folder_hierarchy_list = folder_hierarchy_list.slice(0, history_index + 1);
         }else{
             folder_hierarchy_list.push(folder);
         }
@@ -141,10 +198,25 @@ class Home extends Component{
         this.syncFolderItems(folder.fid);
     }
 
+    backPathHistory = () => {
+        let {folder_hierarchy_list} = this.state;
+        folder_hierarchy_list.splice(-1, 1);
+        let cur_fid = folder_hierarchy_list[folder_hierarchy_list.length - 1].fid;
+
+        this.setState({
+            cur_fid: cur_fid,
+            folder_hierarchy_list
+        });
+        this.syncFolderItems(cur_fid);
+    }
+
     syncFolderItems = (cur_fid) => {
-        // TODO :: 해당 위치의 폴더 및 항목 가져오기
+        // TODO :: 해당 위치의 항목 가져오기
         ipcRenderer.send('getAllFoldersByFid', {
-            cur_fid: cur_fid || this.state.cur_fid
+            cur_fid: cur_fid
+        });
+        ipcRenderer.send('getAllItemsByFid', {
+            cur_fid: cur_fid
         });
     }
 
@@ -158,9 +230,25 @@ class Home extends Component{
 
     createFolder = () => {
         IpcRouter.floatAsk({
-            text_list: ['생성하려는 항목의 이름을 지정해주세요.'],
+            text_list: ['생성하려는 폴더의 이름을 지정해주세요.'],
             use_confirm: true,
             confirm_topic: this.callback_create_folder_confirm,
+            jsx: [
+                {
+                    type: 'input',
+                    placeholder: '폴더 이름을 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'create_item_input'
+                }
+            ]
+        });
+    }
+
+    createItem = () => {
+        IpcRouter.floatAsk({
+            text_list: ['생성하려는 항목의 이름을 지정해주세요.'],
+            use_confirm: true,
+            confirm_topic: this.callback_create_item_confirm,
             jsx: [
                 {
                     type: 'input',

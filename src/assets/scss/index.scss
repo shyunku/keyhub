@@ -27,6 +27,7 @@ html, body, #root{
 
     *::-webkit-scrollbar {
         width: 4px;
+        height: 4px;
         background: none;
         scroll-behavior: smooth;
     }
@@ -39,16 +40,23 @@ html, body, #root{
         // background: linear-gradient(to bottom, rgb(0, 86, 216), rgb(255, 44, 255));
     }
     *::-webkit-scrollbar-thumb {
-        background-color: $light-gray;
+        background-color: $extra-light-gray;
         border-radius: 5px;
     }
 }
 
 .top-action-bar{
     display: flex;
+    position: relative;
+    // position: absolute;
+    // top: 0;
+    // left: 0;
+    width: 100%;
     justify-content: flex-end;
-    background: linear-gradient(to bottom, rgb(148, 148, 148), transparent);
-    // background-color: rgb(230, 230, 230);
+    align-items: center;
+    // background: linear-gradient(to bottom, rgb(148, 148, 148), transparent);
+    border-bottom: 1px solid $light-gray;
+    background-color: $main-theme-color-light;
 
     -webkit-app-region: drag;
     -webkit-user-select: none;
@@ -56,15 +64,24 @@ html, body, #root{
 
     .close-btn{
         display: flex;
-        color: rgb(77, 77, 77);
-        padding: 5px 8px;
+        color: $main-theme-color-super-light;
+        padding: 4px 7px;
         transition: 0.2s linear;
 
         &:hover{
-            background: rgba(255, 0, 0, 0.589);
+            background: rgb(208, 0, 0);
             // background: linear-gradient(to bottom, red, transparent);
             color: white;
         }
+    }
+    .title{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12px;
+        color: white;
+        font-weight: lighter;
     }
 
     .clickable{
@@ -336,7 +353,7 @@ html, body, #root{
                 flex: 1;
                 text-align: center;
                 padding: 10px 0;
-                font-weight: bold;
+                // font-weight: bold;
                 cursor: pointer;
 
                 &:not(:last-child){
@@ -358,11 +375,30 @@ html, body, #root{
             flex-direction: column;
             overflow: hidden;
 
+            .navigator{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 7px 8px;
+                font-size: 12px;
+
+                .back-btn{
+                    display: flex;
+                    align-items: flex-end;
+                    font-size: 12px;
+                    cursor: pointer;
+                    color: $gray;
+
+                    &:hover{
+                        color: black;
+                    }
+                }
+            }
             .entries{
                 display: flex;
                 flex-direction: column;
                 flex: 1;
-                overflow-y: auto;
+                overflow-y: overlay;
                 box-shadow: inset 0 10px 10px -10px rgba(0, 0, 0, 0.226),
                     inset 0 -10px 10px -10px rgba(0, 0, 0, 0.226);
 
@@ -374,14 +410,19 @@ html, body, #root{
                     border-bottom: 1px solid $extra-light-gray;
                     align-items: flex-end;
                     cursor: pointer;
-                    font-size: 14px;
+                    font-size: 13px;
 
                     .name{
-                        font-weight: bold;
+                        // font-weight: bold;
+                        flex: 1;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
                     }
                     .count{
                         font-size: 10px;
-                        color: $gray;
+                        color: $light-gray;
+                        margin-left: 10px;
                     }
                     &:hover{
                         background-color: $main-theme-color-most-light;
@@ -415,15 +456,21 @@ html, body, #root{
             }
             .route-path{
                 display: flex;
+                width: 100%;
                 font-weight: normal;
                 font-size: 10px;
-                // padding: 0 5px;
+                overflow-x: auto;
                 color: $main-theme-color-extra-light;
+
+                .path-list{
+                    display: flex;
+                }
 
                 .path-history{
                     display: flex;
                     padding: 5px 4px;
                     cursor: pointer;
+                    white-space: nowrap;
 
                     &:not(:last-child){
                         padding: 5px 0px 5px 5px;

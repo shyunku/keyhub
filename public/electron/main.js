@@ -120,10 +120,34 @@ ipcMain.on('createAccount', (e, data) => {
         }
     });
 });
+ipcMain.on('createFolder', (e, data) => {
+    const {name, fid} = data;
+    userQuery.createFolder(fid, name, res => {
+        e.reply('createFolder', {
+            success: res,
+            message: res === false ? '폴더 생성에 실패했습니다.' : ''
+        });
+    });
+});
+ipcMain.on('createItem', (e, data) => {
+    const {name, fid} = data;
+    userQuery.createItem(fid, name, res => {
+        e.reply('createItem', {
+            success: res,
+            message: res === false ? '항목 생성에 실패했습니다.' : ''
+        });
+    });
+});
 ipcMain.on('getAllFoldersByFid', (e, data) => {
     const {cur_fid} = data;
     userQuery.getAllFoldersByFid(cur_fid, res => {
         e.reply('getAllFoldersByFid', res);
+    });
+});
+ipcMain.on('getAllItemsByFid', (e, data) => {
+    const {cur_fid} = data;
+    userQuery.getAllItemsByFid(cur_fid, res => {
+        e.reply('getAllItemsByFid', res);
     });
 });
 
