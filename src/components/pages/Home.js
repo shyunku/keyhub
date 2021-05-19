@@ -258,9 +258,9 @@ class Home extends Component{
                                         this.state.keypairs.map((kp, ind) => {
                                             return(
                                                 <div className="key-pair" key={ind}>
-                                                    <div className="key">{kp.key}</div>
+                                                    <div className="key"><div>{kp.key}</div></div>
                                                     <div className="value-wrapper">
-                                                        {Util.aes.decrypt(kp.encrypted_value, this.state.encrypted_pw)}
+                                                        <div>{Util.aes.decrypt(kp.encrypted_value, this.state.encrypted_pw)}</div>
                                                     </div>
                                                 </div>
                                             );

@@ -308,8 +308,8 @@ function createWindow(){
     }
 
     mainWindow = new BrowserWindow({
-        minWidth: 300,
-        minHeight: 500,
+        minWidth: 420,
+        minHeight: 300,
         frame: false,
         show: false,
         webPreferences: {

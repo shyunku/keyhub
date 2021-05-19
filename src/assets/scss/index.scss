@@ -352,6 +352,7 @@ html, body, #root{
 
 #home_page{
     display: flex;
+    transition: 0.3s ease;
 
     .container{
         box-shadow: 0 5px 15px 3px rgba(0, 0, 0, 0.15);
@@ -360,6 +361,7 @@ html, body, #root{
         height: 100%;
         overflow: hidden;
         background-color: white;
+        transition: 0.3s ease;
     }
     .left-part{
         display: flex;
@@ -377,7 +379,7 @@ html, body, #root{
                 flex: 1;
                 text-align: center;
                 padding: 10px 0;
-                // font-weight: bold;
+                transition: 0.2s linear;
                 cursor: pointer;
 
                 &:not(:last-child){
@@ -435,6 +437,7 @@ html, body, #root{
                     align-items: flex-end;
                     cursor: pointer;
                     font-size: 13px;
+                    transition: 0.2s linear;
 
                     .name{
                         // font-weight: bold;
@@ -468,6 +471,7 @@ html, body, #root{
                         color: $main-theme-color-light;
                         text-align: center;
                         padding: 8px 10px;
+                        transition: 0.2s linear;
 
                         &:not(:last-child){
                             border-right: 1px solid $extra-light-gray;
@@ -588,10 +592,10 @@ html, body, #root{
                     display: flex;
                     flex-direction: column;
                     flex: 1;
-                    flex-wrap: wrap;
                     background-color: white;
                     padding: 0 8px;
                     margin-top: 15px;
+                    overflow-x: hidden;
                     overflow-y: auto;
 
                     .key-pair{
@@ -603,7 +607,7 @@ html, body, #root{
                         box-shadow: 0 5px 8px 1px rgb(225, 225, 225);
                         padding: 15px 20px;
                         box-sizing: border-box;
-                        transition: 0.5s linear;
+                        transition: 0.2s linear;
                         font-size: 14px;
                         border-radius: 10px;
                         cursor: default;
@@ -636,20 +640,60 @@ html, body, #root{
                             font-size: 15px;
                             font-weight: bold;
                             box-sizing: border-box;
+                            overflow-x: hidden;
+                            min-width: 50px;
+                            min-height: 15px;
+
+                            div{
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                            }
                         }
                         .value-wrapper{
                             display: flex;
                             justify-content: flex-end;
                             align-items: center;
                             flex: 1;
-                            background: white;
+                            flex-shrink: 0;
+                            white-space: nowrap;
                             color: gray;
                             filter: blur(5px);
-                            transition: 0.3s linear;
+                            transition: 0.5s linear;
                             font-weight: lighter;
+                            margin-left: 10px;
+                            overflow: hidden;
+                            min-width: 50px;
+
+                            div{
+                                overflow-y: hidden;
+                                overflow-x: auto;
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @media screen and (max-width: 650px){
+        flex-direction: column;
+        .left-part{
+            width: 100%;
+            height: 300px;
+            margin-bottom: 15px;
+            margin-right: 0;
+        }
+        .key-pair{
+            padding: 10px 15px !important;
+            margin-bottom: 10px !important;
+            box-shadow: 0 3px 5px 1px rgb(240, 240, 240);
+        }
+
+        @media screen and (max-height: 650px){
+            flex-direction: column;
+            .left-part{
+                height: 0;
             }
         }
     }
