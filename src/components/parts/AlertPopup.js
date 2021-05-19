@@ -68,20 +68,20 @@ class AlertPopup extends React.Component{
                     {
                         this.state.use_confirm
                         &&
-                        <button className="standard-button confirm-style-button" onClick={this.confirmButtonClickHandler}>
+                        <button className="confirm" onClick={this.confirmButtonClickHandler}>
                             {this.state.confirm_button_label}
                         </button>
                     }
                     {
                         this.state.use_cancel
                         &&
-                        <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
+                        <button className="cancel" onClick={this.cancelButtonClickHandler}>
                             {this.state.cancel_button_label}
                         </button>
                     }
                     {
                         !(this.state.use_confirm || this.state.use_cancel) &&
-                        <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
+                        <button className="cancel" onClick={this.cancelButtonClickHandler}>
                             창닫기
                         </button>
                     }

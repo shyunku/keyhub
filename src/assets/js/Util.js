@@ -1,3 +1,5 @@
+const CryptoJS = require('crypto-js');
+const aes = require('crypto-js').AES;
 
 module.exports = {
     generateUniqueTopic: function(label = 'unknown'){
@@ -18,4 +20,12 @@ module.exports = {
         if(diff < 10){return diff + "년 전";}
         return "아주 오래 전";
     },
+    aes: {
+        encrypt: function(cipher, key){
+            return aes.encrypt(cipher, key).toString();
+        },
+        decrypt: function(encrypted, key){
+            return aes.decrypt(encrypted, key).toString(CryptoJS.enc.Utf8);
+        }
+    }
 }

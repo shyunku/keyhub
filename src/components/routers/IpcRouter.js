@@ -36,16 +36,16 @@ module.exports = {
             }
         ));
     },
-    floatAsk: function(popup_data, properties = {}){
+    floatAsk: function(popup_data, bound = {}, properties = {}){
         let texts = popup_data?.text_list.length || 0;
         let jsxs = popup_data?.jsx?.length || 0;
-        let height = 120 + texts * 20 + jsxs * 30;
+        let height = 130 + texts * 20 + jsxs * 40;
         ipcRenderer.send('floatPopup', Object.assign(
             {
-                preferredWindowProperties: {
+                preferredWindowProperties: Object.assign({
                     width: 300,
                     height: height,
-                }
+                }, bound)
             },
             properties,
             {

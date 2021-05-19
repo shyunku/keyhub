@@ -138,6 +138,37 @@ ipcMain.on('createItem', (e, data) => {
         });
     });
 });
+ipcMain.on('createKeypair', (e, data) => {
+    const {key, encrypted_value, iid, encrypted_root_pw, user_id} = data;
+    fetchUserMap(userMap => {
+        if(userMap.hasOwnProperty(user_id)){
+            let userInfo = userMap[user_id];
+            let answer = userInfo.encrypted_pw;
+            let submit = sha256(encrypted_root_pw);
+
+            if(answer === submit){
+                setSubjectUserDB(userInfo.name);
+
+                userQuery.createKeypair(iid, key, encrypted_value, res => {
+                    e.reply('createKeypair', {
+                        success: res,
+                        message: res === false ? '항목 생성에 실패했습니다.' : ''
+                    });
+                });
+            }else{
+                e.reply('createKeypair', {
+                    success: false,
+                    message: '비밀번호가 틀렸습니다.'
+                });
+            }
+        }else{
+            e.reply('createKeypair', {
+                success: false,
+                message: '존재하지 않는 유저입니다.'
+            });
+        }
+    });
+});
 ipcMain.on('getAllFoldersByFid', (e, data) => {
     const {cur_fid} = data;
     userQuery.getAllFoldersByFid(cur_fid, res => {
@@ -150,7 +181,12 @@ ipcMain.on('getAllItemsByFid', (e, data) => {
         e.reply('getAllItemsByFid', res);
     });
 });
-
+ipcMain.on('getAllKeypairsByIid', (e, data) => {
+    const {iid} = data;
+    userQuery.getAllKeypairsByIid(iid, res => {
+        e.reply('getAllKeypairsByIid', res);
+    });
+});
 
 /* ---------------------------- Declaration (Functions) ---------------------------- */
 function makeWindow(isModal, arg, callback = () => {}) {

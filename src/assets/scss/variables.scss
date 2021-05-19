@@ -1,23 +1,27 @@
-$main-theme-color: rgb(0, 68, 170);
-$main-theme-color-light: rgb(0, 92, 230);
-$main-theme-color-extra-light: rgb(56, 136, 255);
-$main-theme-color-super-light: rgb(125, 177, 255);
-$main-theme-color-extreme-light: rgb(189, 217, 255);
-$main-theme-color-most-light: rgb(231, 241, 255);
-$main-theme-color-dark: rgb(0, 60, 150);
-$main-theme-color-extra-dark: rgb(0, 49, 123);
+$main-theme-color-extra-dark: rgb(17, 44, 85);
+$main-theme-color-dark: rgb(16, 56, 118);
+$main-theme-color: rgb(16, 72, 155);
+$main-theme-color-light: rgb(32, 95, 189);
+$main-theme-color-extra-light: rgb(59, 117, 204);
+$main-theme-color-super-light: rgb(103, 146, 209);
+$main-theme-color-extreme-light: rgb(175, 201, 240);
+$main-theme-color-most-light: rgb(238, 245, 255);
 
 $sub-theme-color: rgb(116, 0, 199);
 $sub-theme-color-light: rgb(159, 26, 255);
 $sub-theme-color-extra-light: rgb(187, 92, 255);
 $sub-theme-color-super-light: rgb(202, 129, 255);
 $sub-theme-color-extreme-light: rgb(227, 187, 255);
-$sub-theme-color-most-light: rgb(240, 218, 255);
+$sub-theme-color-most-light: rgb(249, 239, 255);
 
+$std-box-shadow-extra-light: 0 0 20px 1px rgba(0, 0, 0, 0.083);
+$std-box-shadow-light: 0 0 20px 1px rgba(0, 0, 0, 0.159);
 $std-box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.308);
 $std-box-shadow-narrow: 0 0 10px 1px rgba(0, 0, 0, 0.308);
 $std-box-shadow-extra-narrow: 0 0 5px 1px rgba(0, 0, 0, 0.308);
 $std-box-shadow-super-narrow: 0 0 5px 1px rgba(0, 0, 0, 0.308);
+
+$key-box-shadow: 0 0 5px 1px rgb(174, 174, 174);
 
 $card-hover-color: #e9e9e9;
 
@@ -30,3 +34,4 @@ $dark-gray: #555;
 $gray: rgb(148, 148, 148);
 $light-gray: #ccc;
 $extra-light-gray: #eee;
+$super-light-gray: #f3f3f3;

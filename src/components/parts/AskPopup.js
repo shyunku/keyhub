@@ -24,7 +24,14 @@ class AskPopup extends React.Component{
 
     componentDidMount(){
         ipcRenderer.on("__data_param__", (event, data) => {
-            this.setState(data);
+            let wrap = {};
+            for(let jsx of data.jsx){
+                switch(jsx.type){
+                    case 'input': wrap[jsx.name] = ''; break;
+                    default: break;
+                }
+            }
+            this.setState(Object.assign(data, wrap));
         });
     }
 
@@ -61,7 +68,7 @@ class AskPopup extends React.Component{
 
     render() {
         return (
-            <div className="popup">
+            <div className="popup ask">
                 <div className="top-bar" onClick={this.closeWindow}>
                     <div className="close-btn">
                         <IoMdClose/>
@@ -87,6 +94,7 @@ class AskPopup extends React.Component{
                                 case 'input':
                                     return (
                                         <input name={jsx_name} placeholder={jsx.placeholder || ''}
+                                            type={jsx.hide ? 'password' : 'text'}
                                             onKeyDown={jsx.enter_to_confirm ? this.inputKeyDownHandler : null}
                                             onChange={this.inputChangeHandler} value={this.state[jsx_name]}/>
                                     );
@@ -100,20 +108,20 @@ class AskPopup extends React.Component{
                     {
                         this.state.use_confirm
                         &&
-                        <button className="standard-button confirm-style-button" onClick={this.confirmButtonClickHandler}>
+                        <button className="confirm" onClick={this.confirmButtonClickHandler}>
                             {this.state.confirm_button_label}
                         </button>
                     }
                     {
                         this.state.use_cancel
                         &&
-                        <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
+                        <button className="cancel" onClick={this.cancelButtonClickHandler}>
                             {this.state.cancel_button_label}
                         </button>
                     }
                     {
                         !(this.state.use_confirm || this.state.use_cancel) &&
-                        <button className="standard-button cancel-style-button" onClick={this.cancelButtonClickHandler}>
+                        <button className="cancel" onClick={this.cancelButtonClickHandler}>
                             창닫기
                         </button>
                     }

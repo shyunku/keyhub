@@ -21,7 +21,8 @@ class Login extends Component{
             pw_input: '',
             min_name_input_len: 3,
             min_pw_input_len: 6,
-            fetched_user_list: []
+            fetched_user_list: [],
+            encrypted_pw: ''
         };
 
         this.callback_create_account_confirm = Util.generateUniqueTopic('cac');
@@ -56,7 +57,7 @@ class Login extends Component{
 
         ipcRenderer.on('authenticate', (e, data) => {
             if(data.success){
-                this.props.history.push('/home');
+                this.goHome();
             }else{
                 IpcRouter.floatAlert({
                     level: 1,
@@ -67,8 +68,15 @@ class Login extends Component{
         });
 
         ipcRenderer.on(this.callback_create_account_confirm, (e, data) => {
-            this.props.history.push('/home');
+            this.goHome();
         });
+    }
+
+    goHome(){
+        let encrypted_pw = this.state.encrypted_pw;
+        let generated_key = Util.generateUniqueTopic('root-key');
+        let double_encrypted_root_pw = encodeURIComponent(Util.aes.encrypt(encrypted_pw, generated_key));
+        this.props.history.push(`/home?uid=${this.state.selected_account_id}&derp=${double_encrypted_root_pw}&rpk=${generated_key}`);
     }
 
     componentWillUnmount(){
@@ -193,6 +201,10 @@ class Login extends Component{
     authenticate = (id, pw) => {
         ipcRenderer.send('authenticate', {
             user_id: id,
+            encrypted_pw: sha256(pw)
+        });
+
+        this.setState({
             encrypted_pw: sha256(pw)
         });
     }

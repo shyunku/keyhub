@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {IoMdClose, IoIosArrowForward} from 'react-icons/io';
+import {IoMdClose, IoMdAddCircle, IoIosArrowForward} from 'react-icons/io';
 import {IoChevronBack} from 'react-icons/io5';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
@@ -8,10 +8,13 @@ import Util from 'assets/js/Util';
 const electron = window.require("electron");
 const {ipcRenderer} = electron;
 const sha256 = require('sha256');
+const queryString = require('query-string');
 
 class Home extends Component{
     constructor(props){
         super(props);
+        const query = queryString.parse(props.location.search);
+        const {derp, rpk} = query;
         
         this.root_folder = {
             name: 'Root',
@@ -26,14 +29,18 @@ class Home extends Component{
             cur_iid: null,
             folders: [],
             items: [],
+            keypairs: [],
             selected_item: null,
-            item_tab: 'keypair'
+            item_tab: 'keypair',
+            uid: query.uid,
+            encrypted_pw: Util.aes.decrypt(decodeURIComponent(derp), rpk)
         };
 
         window.document.title = 'keyhub';
 
         this.callback_create_folder_confirm = Util.generateUniqueTopic('create-folder');
         this.callback_create_item_confirm = Util.generateUniqueTopic('create-item');
+        this.callback_create_keypair_confirm = Util.generateUniqueTopic('create-keypair');
     }
 
     componentDidMount(){
@@ -41,6 +48,14 @@ class Home extends Component{
 
         ipcRenderer.on(this.callback_create_folder_confirm, (e, data) => {
             let itemName = data.create_item_input;
+            if(itemName.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['폴더명은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
             ipcRenderer.send('createFolder', {
                 name: itemName,
                 fid: this.state.cur_fid
@@ -48,9 +63,43 @@ class Home extends Component{
         });
         ipcRenderer.on(this.callback_create_item_confirm, (e, data) => {
             let itemName = data.create_item_input;
+
+            if(itemName.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['항목명은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
             ipcRenderer.send('createItem', {
                 name: itemName,
                 fid: this.state.cur_fid
+            });
+        });
+        ipcRenderer.on(this.callback_create_keypair_confirm, (e, data) => {
+            let key = data.create_key_input;
+            let value = data.create_value_input;
+
+            let encrypted_root_pw = sha256(data.create_root_pw_input);
+            let encrypted_value = Util.aes.encrypt(value, encrypted_root_pw);
+
+            if(key.length === 0 || value.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['키와 값 모두 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
+            ipcRenderer.send('createKeypair', {
+                iid: this.state.selected_item.iid,
+                key,
+                encrypted_value: encrypted_value,
+                encrypted_root_pw: encrypted_root_pw,
+                user_id: this.state.uid
             });
         });
         ipcRenderer.on('getAllFoldersByFid', (e, data) => {
@@ -61,6 +110,11 @@ class Home extends Component{
         ipcRenderer.on('getAllItemsByFid', (e, data) => {
             this.setState({
                 items: data
+            });
+        });
+        ipcRenderer.on('getAllKeypairsByIid', (e, data) => {
+            this.setState({
+                keypairs: data
             });
         });
         ipcRenderer.on('createFolder', (e, data) => {
@@ -85,8 +139,23 @@ class Home extends Component{
                 this.syncFolderItems(this.state.cur_fid);
             }
         });
+        ipcRenderer.on('createKeypair', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.loadKeypairs(this.state.selected_item.iid);
+            }
+        });
 
         this.syncFolderItems(null);
+
+        setInterval(() => {
+            this.forceUpdate();
+        }, 1000);
     }
 
     componentWillUnmount(){
@@ -178,18 +247,30 @@ class Home extends Component{
                     {
                         cur_iid ?
                         <div className="folder-item info-container">
-                            <div className="item-path">{"일반 > 전체 > 게임 > 리그오브레전드"}</div>
+                            <div className="item-path">{selected_item.history}</div>
                             <div className="item-summary">
                                 <div className="item-name">{selected_item.name}</div>
                                 <div className="item-representives">생성: {Util.relativeTime(selected_item.created_timestamp)}</div>
                             </div>
                             <div className="contents">
-                                <div className="tab-list">
-                                    <div className="tab selected">키페어</div>
-                                    <div className="tab">자세히</div>
-                                </div>
                                 <div className="main-content">
-                                    {/* 메인 컨텐츠 */}
+                                    {
+                                        this.state.keypairs.map((kp, ind) => {
+                                            return(
+                                                <div className="key-pair" key={ind}>
+                                                    <div className="key">{kp.key}</div>
+                                                    <div className="value-wrapper">
+                                                        {Util.aes.decrypt(kp.encrypted_value, this.state.encrypted_pw)}
+                                                    </div>
+                                                </div>
+                                            );
+                                            
+                                        })
+                                    }
+                                    <div className="key-pair add" onClick={this.createKeypair}>
+                                        <div className="icon"><IoMdAddCircle/></div>
+                                        <div className="label">키페어 추가</div>
+                                    </div>
                                 </div>
                             </div>
                         </div> :
@@ -225,9 +306,17 @@ class Home extends Component{
     }
 
     revealItem = item => {
+        item.history = this.state.folder_hierarchy_list.map(f => f.name).join(' > ');
         this.setState({
             cur_iid: item.iid,
             selected_item: item
+        });
+        this.loadKeypairs(item.iid);
+    }
+
+    loadKeypairs = iid => {
+        ipcRenderer.send('getAllKeypairsByIid', {
+            iid: iid
         });
     }
 
@@ -262,7 +351,7 @@ class Home extends Component{
 
     createFolder = () => {
         IpcRouter.floatAsk({
-            text_list: ['생성하려는 폴더의 이름을 지정해주세요.'],
+            text_list: ['폴더 생성'],
             use_confirm: true,
             confirm_topic: this.callback_create_folder_confirm,
             jsx: [
@@ -275,10 +364,9 @@ class Home extends Component{
             ]
         });
     }
-
     createItem = () => {
         IpcRouter.floatAsk({
-            text_list: ['생성하려는 항목의 이름을 지정해주세요.'],
+            text_list: ['항목 생성'],
             use_confirm: true,
             confirm_topic: this.callback_create_item_confirm,
             jsx: [
@@ -289,6 +377,36 @@ class Home extends Component{
                     name: 'create_item_input'
                 }
             ]
+        });
+    }
+    createKeypair = () => {
+        IpcRouter.floatAsk({
+            text_list: ['키페어 생성'],
+            use_confirm: true,
+            confirm_topic: this.callback_create_keypair_confirm,
+            jsx: [
+                {
+                    type: 'input',
+                    placeholder: '키 이름(비밀번호, 이메일 등)을 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'create_key_input'
+                },
+                {
+                    type: 'input',
+                    placeholder: '해당 키의 값을 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'create_value_input'
+                },
+                {
+                    type: 'input',
+                    placeholder: '사용자 비밀번호를 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'create_root_pw_input',
+                    hide: true
+                }
+            ]
+        }, {
+            width: 400
         });
     }
 }
