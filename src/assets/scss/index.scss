@@ -162,7 +162,7 @@ html, body, #root{
             transition: 0.15s linear;
             border-radius: 5px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             min-width: 10px;
             margin-top: 5px;
 
@@ -439,6 +439,12 @@ html, body, #root{
                     font-size: 13px;
                     transition: 0.2s linear;
 
+                    .icon{
+                        display: flex;
+                        align-items: center;
+                        margin-right: 5px;
+                        color: $main-theme-color-super-light;
+                    }
                     .name{
                         // font-weight: bold;
                         flex: 1;

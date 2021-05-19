@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {IoMdClose, IoMdAddCircle, IoIosArrowForward} from 'react-icons/io';
 import {IoChevronBack} from 'react-icons/io5';
+import {FaFolder, FaFileAlt, FaFile} from 'react-icons/fa';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import Util from 'assets/js/Util';
@@ -189,6 +190,7 @@ class Home extends Component{
                                             {
                                                 this.state.folders.map(folder => (
                                                     <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}>
+                                                        <div className="icon"><FaFolder/></div>
                                                         <div className="name">{folder.name}</div>
                                                         <div className="count">10개 항목</div>
                                                     </div>
@@ -197,6 +199,7 @@ class Home extends Component{
                                             {
                                                 this.state.items.map(item => (
                                                     <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}>
+                                                        <div className="icon"><FaFileAlt/></div>
                                                         <div className="name">{item.name}</div>
                                                     </div>
                                                 ))
