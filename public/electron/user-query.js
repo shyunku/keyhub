@@ -2,7 +2,21 @@ module.exports = function(db){
     return {
         // Users
         getAllFoldersByFid: function(fid, resolve) {
-            db.all(`SELECT * FROM folder_master where parent_fid IS ?;`, [fid], (err, result) => {
+            db.all(`
+                SELECT *, (
+                    SELECT sum(cnt)
+                    FROM
+                    (
+                        SELECT count(*) as cnt
+                        FROM folder_master
+                        WHERE parent_fid = fm.fid
+                            UNION ALL
+                        SELECT count(*) as cnt
+                        FROM item_master
+                        WHERE fid = fm.fid
+                    )
+                ) AS count FROM folder_master as fm WHERE fm.parent_fid IS ?;
+            `, [fid], (err, result) => {
                 if(err) throw err;
                 resolve(result);
             });
@@ -47,6 +61,109 @@ module.exports = function(db){
                 }else{
                     resolve(true);
                 }
+            });
+        },
+        deleteFolderOnly: function(fid, parent_fid, resolve){
+            db.run(`UPDATE folder_master SET parent_fid = ? WHERE parent_fid IS ?;`, [parent_fid, fid], err => {
+                if(err){
+                    console.error(err);
+                    resolve(-1);
+                }else{
+                    db.run(`UPDATE item_master SET fid = ? WHERE fid IS ?;`, [parent_fid, fid], err => {
+                        if(err){
+                            console.error(err);
+                            resolve(-2);
+                        }else{
+                            db.run(`DELETE FROM folder_master WHERE fid = ?;`, [fid], err => {
+                                if(err){
+                                    console.error(err);
+                                    resolve(-3);
+                                }else{
+                                    resolve(0);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        },
+        deleteFolderAndItsContents: function(fid, resolve){
+            db.run(`
+                WITH RECURSIVE recursive_flush_folder(parent, cur, name)
+                AS (
+                    VALUES(null, ?, 'unknown')
+                    UNION ALL
+                    SELECT folder_master.parent_fid, folder_master.fid, folder_master.name
+                    FROM folder_master, recursive_flush_folder
+                    WHERE folder_master.parent_fid = recursive_flush_folder.cur
+                ),
+                collected_res as(
+                    SELECT rff.cur AS fid
+                    FROM recursive_flush_folder AS rff
+                    LEFT JOIN item_master im on rff.cur = im.fid
+                )
+                DELETE FROM item_master
+                WHERE item_master.fid IN collected_res;
+            `, [fid], err => {
+                if(err){
+                    console.error(err);
+                    resolve(-1);
+                }else{
+                    // WTF??
+                    db.run(`
+                        WITH RECURSIVE recursive_flush_folder(parent, cur, name)
+                        AS (
+                            VALUES(null, ?, 'unknown')
+                            UNION ALL
+                            SELECT folder_master.parent_fid, folder_master.fid, folder_master.name
+                            FROM folder_master, recursive_flush_folder
+                            WHERE folder_master.parent_fid = recursive_flush_folder.cur
+                        ),
+                        collected_res as(
+                            SELECT rff.cur AS fid
+                            FROM recursive_flush_folder AS rff
+                            LEFT JOIN item_master im on rff.cur = im.fid
+                        )
+                        DELETE FROM folder_master
+                        WHERE folder_master.fid IN collected_res;
+                    `, [fid], err => {
+                        if(err){
+                            console.error(err);
+                            resolve(-2);
+                        }else{
+                            resolve(0);
+                        }
+                    });
+                }
+            });
+        },
+        deleteItem: function(iid, resolve){
+            db.run(`DELETE FROM item_master WHERE iid = ?;`, [iid], err => {
+                if(err){
+                    console.error(err);
+                    resolve(false);
+                }else{
+                    resolve(true);
+                }
+            });
+        },
+        getRecursiveCountsItemOnly: function(fid, resolve){
+            db.all(`
+                WITH RECURSIVE recursive_item_cnt(parent, cur, name)
+                AS (
+                    VALUES(null, ?, 'unknown')
+                    UNION ALL
+                    SELECT folder_master.parent_fid, folder_master.fid, folder_master.name
+                    FROM folder_master, recursive_item_cnt
+                    WHERE folder_master.parent_fid = recursive_item_cnt.cur
+                )
+                SELECT count(*)
+                FROM recursive_item_cnt AS rc
+                LEFT JOIN item_master im on rc.cur = im.fid
+                WHERE im.iid IS NOT NULL;
+            `, [fid], (err, results) => {
+                if(err) throw err;
+                resolve(results[0]);
             });
         }
     };

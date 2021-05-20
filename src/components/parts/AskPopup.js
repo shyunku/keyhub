@@ -49,6 +49,13 @@ class AskPopup extends React.Component{
         electron.remote.getCurrentWindow().close();
     }
 
+    buttonClickHandler = callback_topic => {
+        if(callback_topic){
+            IpcRouter.redirect(callback_topic, this.state);
+        }
+        electron.remote.getCurrentWindow().close();
+    }
+
     inputChangeHandler = (e) =>{
         let name = e.target.name;
         this.setState({
@@ -97,6 +104,11 @@ class AskPopup extends React.Component{
                                             type={jsx.hide ? 'password' : 'text'}
                                             onKeyDown={jsx.enter_to_confirm ? this.inputKeyDownHandler : null}
                                             onChange={this.inputChangeHandler} value={this.state[jsx_name]}/>
+                                    );
+                                case 'button':
+                                    return (
+                                        <button name={jsx_name} className={(jsx.class || []).join(' ')}
+                                            onClick={e => {this.buttonClickHandler(jsx.callback_topic);}}>{jsx.text}</button>
                                     );
                                 default:
                                     return <>NO_TYPE_JSX</>

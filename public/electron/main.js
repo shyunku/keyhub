@@ -169,6 +169,42 @@ ipcMain.on('createKeypair', (e, data) => {
         }
     });
 });
+ipcMain.on('deleteFolderOnly', (e, data) => {
+    const {fid, parent_fid} = data;
+    userQuery.deleteFolderOnly(fid, parent_fid, res => {
+        e.reply('deleteFolderOnly', {
+            success: res === 0,
+            message: {
+                "0": '',
+                "-1": '오류가 발생해 폴더 삭제에 실패했습니다.',
+                "-2": '오류가 발생해 하위 폴더들만 이전되었습니다.',
+                "-3": '오류가 발생해 하위 폴더 및 항목들만 이전되었습니다.'
+            }[res]
+        });
+    });
+});
+ipcMain.on('deleteFolderAll', (e, data) => {
+    const {fid} = data;
+    userQuery.deleteFolderAndItsContents(fid, res => {
+        e.reply('deleteFolderAll', {
+            success: res === 0,
+            message: {
+                "0": '',
+                "-1": '오류가 발생해 폴더 삭제에 실패했습니다.',
+                "-2": '오류가 발생해 하위 항목들만 삭제되었습니다.',
+            }[res]
+        });
+    });
+});
+ipcMain.on('deleteItem', (e, data) => {
+    const {iid} = data;
+    userQuery.deleteItem(iid, res => {
+        e.reply('deleteItem', {
+            success: res,
+            message: res === false ? '항목 삭제에 실패했습니다.' : ''
+        });
+    });
+});
 ipcMain.on('getAllFoldersByFid', (e, data) => {
     const {cur_fid} = data;
     userQuery.getAllFoldersByFid(cur_fid, res => {

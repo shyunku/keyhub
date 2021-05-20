@@ -34,6 +34,8 @@ class Home extends Component{
             selected_item: null,
             item_tab: 'keypair',
             uid: query.uid,
+            editing_folder_id: null,
+            editing_item_id: null,
             encrypted_pw: Util.aes.decrypt(decodeURIComponent(derp), rpk)
         };
 
@@ -42,6 +44,10 @@ class Home extends Component{
         this.callback_create_folder_confirm = Util.generateUniqueTopic('create-folder');
         this.callback_create_item_confirm = Util.generateUniqueTopic('create-item');
         this.callback_create_keypair_confirm = Util.generateUniqueTopic('create-keypair');
+        this.callback_delete_folder_only_confirm = Util.generateUniqueTopic('delete-folder-only');
+        this.callback_delete_folder_all_confirm = Util.generateUniqueTopic('delete-folder-all');
+        this.callback_delete_item_confirm = Util.generateUniqueTopic('delete-item');
+        this.callback_delete_keypair_confirm = Util.generateUniqueTopic('delete-keypair');
     }
 
     componentDidMount(){
@@ -103,6 +109,18 @@ class Home extends Component{
                 user_id: this.state.uid
             });
         });
+        ipcRenderer.on(this.callback_delete_folder_only_confirm, (e, data) => {
+            let target_folder = data.data;
+            ipcRenderer.send('deleteFolderOnly', target_folder);
+        });
+        ipcRenderer.on(this.callback_delete_folder_all_confirm, (e, data) => {
+            let target_folder = data.data;
+            ipcRenderer.send('deleteFolderAll', target_folder);
+        });
+        ipcRenderer.on(this.callback_delete_item_confirm, (e, data) => {
+            let target_item = data.data;
+            ipcRenderer.send('deleteItem', target_item);
+        });
         ipcRenderer.on('getAllFoldersByFid', (e, data) => {
             this.setState({
                 folders: data
@@ -151,12 +169,57 @@ class Home extends Component{
                 this.loadKeypairs(this.state.selected_item.iid);
             }
         });
+        ipcRenderer.on('deleteFolderOnly', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
+        ipcRenderer.on('deleteFolderAll', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
+        ipcRenderer.on('deleteItem', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
 
         this.syncFolderItems(null);
 
         setInterval(() => {
             this.forceUpdate();
         }, 1000);
+
+        window.addEventListener('click', this.unfocusEntryEditMode);
+    }
+
+    unfocusEntryEditMode = (e) => {
+        let target = e.target;
+
+        // console.log(target.classList);
+        this.setState({
+            editing_folder_id: null,
+            editing_item_id: null
+        });
     }
 
     componentWillUnmount(){
@@ -189,18 +252,30 @@ class Home extends Component{
                                         <div className="entries">
                                             {
                                                 this.state.folders.map(folder => (
-                                                    <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}>
+                                                    <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}
+                                                        onContextMenu={e => this.openFolderOption(folder)}>
                                                         <div className="icon"><FaFolder/></div>
-                                                        <div className="name">{folder.name}</div>
-                                                        <div className="count">10개 항목</div>
+                                                        <div className="name-cover">
+                                                            <div className="name folder">{folder.name}</div>
+                                                            <div className="count">({folder.count})</div>
+                                                        </div>
+                                                        <div className={"controller " + (this.state.editing_folder_id === folder.fid ? 'focus' : '')}>
+                                                            <div className="edit un-unfocusable">수정</div>
+                                                            <div className="del un-unfocusable" onClick={e => this.deleteFolder(e, folder)}>삭제</div>
+                                                        </div>
                                                     </div>
                                                 ))
                                             }
                                             {
                                                 this.state.items.map(item => (
-                                                    <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}>
+                                                    <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}
+                                                        onContextMenu={e => this.openItemOption(item)}>
                                                         <div className="icon"><FaFileAlt/></div>
                                                         <div className="name">{item.name}</div>
+                                                        <div className={"controller " + (this.state.editing_item_id === item.iid ? 'focus' : '')}>
+                                                            <div className="edit un-unfocusable">수정</div>
+                                                            <div className="del un-unfocusable" onClick={e => this.deleteItem(e, item)}>삭제</div>
+                                                        </div>
                                                     </div>
                                                 ))
                                             }
@@ -278,15 +353,76 @@ class Home extends Component{
                             </div>
                         </div> :
                         <div className="item-info info-container">
-                            <div>폴더 이름</div>
-                            <div>생성시간</div>
-                            <div>블라블라</div>
+                            <div className="item-path">
+                                {folder_hierarchy_list.map(e => e.name).join(' > ')}
+                            </div>
+                            <div className="item-summary">
+                                <div className="item-name">{folder_hierarchy_list[folder_hierarchy_list.length - 1].name}</div>
+                            </div>
                         </div>
                     }
                     </div>
                 </div>
             </div>
         );
+    }
+
+    deleteFolder = (e, folder) => {
+        e.stopPropagation();
+
+        IpcRouter.floatAsk({
+            level: 1,
+            text_list: [`'${folder.name}' 폴더가 영구 삭제됩니다.`, '계속하시겠습니까?'],
+            jsx: [
+                {
+                    type: 'button',
+                    text: '해당 폴더와 하위 폴더 및 항목 모두 삭제',
+                    class: ['danger'],
+                    callback_topic: this.callback_delete_folder_all_confirm
+                },
+                {
+                    type: 'button',
+                    text: '해당 폴더만 삭제',
+                    class: ['std'],
+                    callback_topic: this.callback_delete_folder_only_confirm
+                }
+            ],
+            use_cancel: true,
+            data: folder
+        });
+    }
+
+    deleteItem = (e, item) => {
+        e.stopPropagation();
+
+        IpcRouter.floatAsk({
+            level: 1,
+            text_list: [`'${item.name}' 항목이 영구 삭제됩니다.`, '계속하시겠습니까?'],
+            jsx: [
+                {
+                    type: 'button',
+                    text: '삭제',
+                    class: ['std'],
+                    callback_topic: this.callback_delete_item_confirm
+                }
+            ],
+            use_cancel: true,
+            data: item
+        });
+    }
+
+    openFolderOption = folder => {
+        this.setState({
+            editing_folder_id: folder.fid,
+            editing_item_id: null
+        });
+    }
+
+    openItemOption = item => {
+        this.setState({
+            editing_folder_id: null,
+            editing_item_id: item.iid
+        });
     }
 
     enterFolder = folder => {
@@ -303,7 +439,9 @@ class Home extends Component{
 
         this.setState({
             cur_fid: folder.fid,
-            folder_hierarchy_list
+            folder_hierarchy_list,
+            editing_folder_id: null,
+            editing_item_id: null
         });
         this.syncFolderItems(folder.fid);
     }

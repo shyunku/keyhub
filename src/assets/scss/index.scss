@@ -145,7 +145,7 @@ html, body, #root{
         align-items: center;
         flex-direction: column;
         flex: 1;
-        margin: 10px 0;
+        // margin: 10px 0;
         // padding: 0 5px;
 
         & > *{
@@ -176,6 +176,18 @@ html, body, #root{
                 &::placeholder{
                     color: $gray;
                 }
+            }
+        }
+        button{
+            margin-top: 5px;
+
+            &.std{
+                background: $main-theme-color;
+                color: white;
+            }
+            &.danger{
+                background: $error-color;
+                color: white;
             }
         }
     }
@@ -430,6 +442,7 @@ html, body, #root{
 
                 .entry-item{
                     display: flex;
+                    position: relative;
                     justify-content: space-between;
                     padding: 8px 10px;
                     box-sizing: border-box;
@@ -439,27 +452,73 @@ html, body, #root{
                     font-size: 13px;
                     transition: 0.2s linear;
 
+                    .controller{
+                        position: absolute;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        top: 0;
+                        bottom: 0;
+                        right: -50%;
+                        transition: 0.3s ease;
+
+                        & > *{
+                            display: flex;
+                            align-items: center;
+                            height: 100%;
+                            padding: 0 10px;
+                            color: white;
+                            transition: 0.15s linear;
+                        }
+                        .edit{
+                            background-color: rgb(245, 188, 0);
+                            &:hover{
+                                background-color: rgb(216, 166, 0);
+                            }
+                        }
+                        .del{
+                            background-color: rgb(213, 35, 35);
+                            &:hover{
+                                background-color: rgb(163, 27, 27);
+                            }
+                        }
+                        &.focus{
+                            right: 0%;
+                        }
+                    }
                     .icon{
                         display: flex;
                         align-items: center;
                         margin-right: 5px;
                         color: $main-theme-color-super-light;
                     }
+                    .name-cover{
+                        display: flex;
+                        align-items: flex-end;
+                        flex: 1;
+                    }
                     .name{
                         // font-weight: bold;
-                        flex: 1;
                         overflow: hidden;
                         white-space: nowrap;
                         text-overflow: ellipsis;
+
+                        &.folder{
+                            max-width: 60%;
+                        }
+                        &:not(.folder){
+                            flex: 1;
+                        }
                     }
                     .count{
                         font-size: 10px;
                         color: $light-gray;
-                        margin-left: 10px;
+                        margin-left: 3px;
+                        // margin-left: 10px;
                     }
                     &:hover{
                         background-color: $main-theme-color-most-light;
-                        .count{color: $dark-gray};
+                        // .count{color: $gray};
                     }
                 }
                 .create{
