@@ -70,6 +70,10 @@ class Login extends Component{
         ipcRenderer.on(this.callback_create_account_confirm, (e, data) => {
             this.goHome();
         });
+
+        setInterval(() => {
+            this.forceUpdate();
+        }, 1000);
     }
 
     goHome(){

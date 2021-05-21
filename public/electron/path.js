@@ -1,14 +1,28 @@
+const {app} = require('electron');
 const path = require('path');
-const rootDir = path.resolve(__dirname, '../../');
+const package = require('../../package.json');
+
+const appDataPath = app.getPath('userData');
+const appPath = app.getAppPath();
+const isBuildMode = !process.env.ELECTRON_START_URL;
+const datafilesDirname = 'datafiles';
+
+let schemeVersion = package.schemeVersion;
+const rootDir = isBuildMode ? appDataPath : path.join(__dirname, '../../');
 
 module.exports = {
     directory: {
         root: rootDir,
-        userAccountDatabase: rootDir + '/datafiles/databases',
+        core: path.join(rootDir, datafilesDirname, schemeVersion, 'core'),
+        userAccountDatabase: path.join(rootDir, datafilesDirname, schemeVersion, 'databases'),
     },
     path: {
-        coreDB: rootDir + '/datafiles/core/core.sqlite3',
-        coreTemplateDB: rootDir + '/public/default/core-template.sqlite3',
-        userTemplateDB: rootDir + '/public/default/user-template.sqlite3'
+        coreDB: path.join(rootDir, datafilesDirname, schemeVersion, 'core', 'core.sqlite3'),
+        coreTemplateDB: isBuildMode ?
+            path.join(appPath, 'build', 'default', 'core-template.sqlite3') :
+            path.join(rootDir, 'public', 'default', 'core-template.sqlite3'),
+        userTemplateDB: isBuildMode ?
+            path.join(appPath, 'build', 'default', 'user-template.sqlite3') :
+            path.join(rootDir, 'public', 'default', 'user-template.sqlite3'),
     }
 };

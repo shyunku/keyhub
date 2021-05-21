@@ -1,20 +1,26 @@
 /* ---------------------------- Imports ---------------------------- */
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 const sha256 = require('sha256');
 const {ipcMain, webContents, app, BrowserWindow, screen, remote, Menu} = require('electron');
 
 const packageJson = require('../../package.json');
 const pathManager = require('./path');
 const sqlite = require('./sqlite');
+const fileManager = require('./file-manage');
 
 const coreQueryLib = require('./core-query');
 const userQueryLib = require('./user-query');
 
 /* ---------------------------- Declaration (Variables) ---------------------------- */
-const isBuildMode = !process.env.ELECTRON_START_URL;
 let mainWindow = null;
-let entryUrlPrefix = 'http://localhost:3000/';
+const isBuildMode = !process.env.ELECTRON_START_URL;
+let entryUrlPrefix = process.env.ELECTRON_START_URL || url.format({
+    pathname: path.join(__dirname, "../../build/index.html"),
+    protocol: 'file',
+    slashes: true,
+});
 let coreDB, userDB;
 let coreQuery, userQuery;
 const defaultWindowProperties = {
@@ -36,6 +42,7 @@ const defaultWindowProperties = {
 };
 
 /* ---------------------------- Preprocess ---------------------------- */
+fileManager();
 sqlite.getCoreDatabaseContext(context => {
     coreDB = context;
     coreQuery = coreQueryLib(coreDB);
@@ -70,6 +77,7 @@ ipcMain.on('getUserAccounts', async (e, data) => {
 ipcMain.on('authenticate', (e, data) => {
     const {user_id, encrypted_pw} = data;
     fetchUserMap(userMap => {
+        console.log(userMap, user_id);
         if(userMap.hasOwnProperty(user_id)){
             let userInfo = userMap[user_id];
             let answer = userInfo.encrypted_pw;
@@ -94,6 +102,7 @@ ipcMain.on('authenticate', (e, data) => {
         }
     });
 });
+/* ---------------- Create ---------------- */
 ipcMain.on('createAccount', (e, data) => {
     const {name, encrypted_pw} = data;
 
@@ -123,7 +132,7 @@ ipcMain.on('createAccount', (e, data) => {
 ipcMain.on('createFolder', (e, data) => {
     const {name, fid} = data;
     userQuery.createFolder(fid, name, res => {
-        e.reply('createFolder', {
+        e.reply('syncDatabase', {
             success: res,
             message: res === false ? '폴더 생성에 실패했습니다.' : ''
         });
@@ -132,7 +141,7 @@ ipcMain.on('createFolder', (e, data) => {
 ipcMain.on('createItem', (e, data) => {
     const {name, fid} = data;
     userQuery.createItem(fid, name, res => {
-        e.reply('createItem', {
+        e.reply('syncDatabase', {
             success: res,
             message: res === false ? '항목 생성에 실패했습니다.' : ''
         });
@@ -147,32 +156,31 @@ ipcMain.on('createKeypair', (e, data) => {
             let submit = sha256(encrypted_root_pw);
 
             if(answer === submit){
-                setSubjectUserDB(userInfo.name);
-
                 userQuery.createKeypair(iid, key, encrypted_value, res => {
-                    e.reply('createKeypair', {
+                    e.reply('syncKeypairs', {
                         success: res,
                         message: res === false ? '항목 생성에 실패했습니다.' : ''
                     });
                 });
             }else{
-                e.reply('createKeypair', {
+                e.reply('syncKeypairs', {
                     success: false,
                     message: '비밀번호가 틀렸습니다.'
                 });
             }
         }else{
-            e.reply('createKeypair', {
+            e.reply('syncKeypairs', {
                 success: false,
                 message: '존재하지 않는 유저입니다.'
             });
         }
     });
 });
+/* ---------------- Delete ---------------- */
 ipcMain.on('deleteFolderOnly', (e, data) => {
     const {fid, parent_fid} = data;
     userQuery.deleteFolderOnly(fid, parent_fid, res => {
-        e.reply('deleteFolderOnly', {
+        e.reply('syncDatabase', {
             success: res === 0,
             message: {
                 "0": '',
@@ -186,7 +194,7 @@ ipcMain.on('deleteFolderOnly', (e, data) => {
 ipcMain.on('deleteFolderAll', (e, data) => {
     const {fid} = data;
     userQuery.deleteFolderAndItsContents(fid, res => {
-        e.reply('deleteFolderAll', {
+        e.reply('syncDatabase', {
             success: res === 0,
             message: {
                 "0": '',
@@ -199,12 +207,91 @@ ipcMain.on('deleteFolderAll', (e, data) => {
 ipcMain.on('deleteItem', (e, data) => {
     const {iid} = data;
     userQuery.deleteItem(iid, res => {
-        e.reply('deleteItem', {
+        e.reply('syncDatabase', {
             success: res,
             message: res === false ? '항목 삭제에 실패했습니다.' : ''
         });
     });
 });
+ipcMain.on('deleteKeypair', (e, data) => {
+    const {kpid, user_id, encrypted_root_pw} = data;
+    fetchUserMap(userMap => {
+        if(userMap.hasOwnProperty(user_id)){
+            let userInfo = userMap[user_id];
+            let answer = userInfo.encrypted_pw;
+            let submit = sha256(encrypted_root_pw);
+
+            if(answer === submit){
+                userQuery.deleteKeypair(kpid, res => {
+                    e.reply('syncKeypairs', {
+                        success: res,
+                        message: res === false ? '키페어 삭제에 실패했습니다.' : ''
+                    });
+                });
+            }else{
+                e.reply('syncKeypairs', {
+                    success: false,
+                    message: '비밀번호가 틀렸습니다.'
+                });
+            }
+        }else{
+            e.reply('syncKeypairs', {
+                success: false,
+                message: '존재하지 않는 유저입니다.'
+            });
+        }
+    });
+
+});
+/* ---------------- Edit ---------------- */
+ipcMain.on('editFolder', (e, data) => {
+    const {fid, name} = data;
+    userQuery.editFolder(fid, name, res => {
+        e.reply('syncDatabase', {
+            success: res,
+            message: res === false ? '폴더 이름 수정에 실패했습니다.' : ''
+        });
+    });
+});
+ipcMain.on('editItem', (e, data) => {
+    const {iid, name} = data;
+    userQuery.editItem(iid, name, res => {
+        e.reply('syncDatabase', {
+            success: res,
+            message: res === false ? '항목 이름 수정에 실패했습니다.' : ''
+        });
+    });
+});
+ipcMain.on('editKeypair', (e, data) => {
+    const {new_key, encrypted_value, encrypted_root_pw, kpid, user_id} = data;
+    fetchUserMap(userMap => {
+        if(userMap.hasOwnProperty(user_id)){
+            let userInfo = userMap[user_id];
+            let answer = userInfo.encrypted_pw;
+            let submit = sha256(encrypted_root_pw);
+
+            if(answer === submit){
+                userQuery.editKeypair(kpid, new_key, encrypted_value, res => {
+                    e.reply('syncKeypairs', {
+                        success: res,
+                        message: res === false ? '키페어 수정에 실패했습니다.' : ''
+                    });
+                });
+            }else{
+                e.reply('syncKeypairs', {
+                    success: false,
+                    message: '비밀번호가 틀렸습니다.'
+                });
+            }
+        }else{
+            e.reply('syncKeypairs', {
+                success: false,
+                message: '존재하지 않는 유저입니다.'
+            });
+        }
+    });
+});
+/* ---------------- Getter ---------------- */
 ipcMain.on('getAllFoldersByFid', (e, data) => {
     const {cur_fid} = data;
     userQuery.getAllFoldersByFid(cur_fid, res => {
@@ -224,12 +311,19 @@ ipcMain.on('getAllKeypairsByIid', (e, data) => {
     });
 });
 
+ipcMain.on('searchEntriesWithKeyword', (e, data) => {
+    const {keyword} = data;
+    userQuery.searchEntriesWithKeyword(keyword, res => {
+        e.reply('searchedEntries', res);
+    });
+});
+
 /* ---------------------------- Declaration (Functions) ---------------------------- */
 function makeWindow(isModal, arg, callback = () => {}) {
     let url = decodeURIComponent(entryUrlPrefix + '#' + arg.url).replace(/\s/g, '');
 
     if(isBuildMode){
-        url = modalUrl.replaceAll("\\", "/");
+        url = url.replaceAll("\\", "/");
     }
 
     let parentWindowId = arg.currentWindowId ? arg.currentWindowId : mainWindow.id;
@@ -399,14 +493,14 @@ function setSubjectUserDB(name){
 
 function fetchUserMap(resolve){
     fetchUserInfo(userInfoArr => {
-        userInfoArr.reduce((acc, cur) => {
+        let userMap = userInfoArr.reduce((acc, cur) => {
             if(cur.user_id){
                 acc[cur.user_id] = cur;
             }
             return acc;
         }, {});
 
-        resolve(userInfoArr);
+        resolve(userMap);
     });
 }
 
@@ -422,7 +516,7 @@ function fetchUserInfo(resolve){
             });
             let userInfoFromDatabases = filteredUser.map(entry => {
                 let filePath = targetDir + '/' + entry + '.sqlite3';
-                let modifiedTime = fs.statSync(filePath).mtime.getTime();
+                let modifiedTime = fs.statSync(filePath).atime.getTime();
                 return {
                     name: entry,
                     last_modified_time: modifiedTime

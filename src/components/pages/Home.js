@@ -31,12 +31,14 @@ class Home extends Component{
             folders: [],
             items: [],
             keypairs: [],
+            searched_folders: [],
+            searched_items: [],
             selected_item: null,
             item_tab: 'keypair',
             uid: query.uid,
             editing_folder_id: null,
             editing_item_id: null,
-            encrypted_pw: Util.aes.decrypt(decodeURIComponent(derp), rpk)
+            encrypted_pw: Util.aes.decrypt(decodeURIComponent(derp), rpk),
         };
 
         window.document.title = 'keyhub';
@@ -44,10 +46,15 @@ class Home extends Component{
         this.callback_create_folder_confirm = Util.generateUniqueTopic('create-folder');
         this.callback_create_item_confirm = Util.generateUniqueTopic('create-item');
         this.callback_create_keypair_confirm = Util.generateUniqueTopic('create-keypair');
+
         this.callback_delete_folder_only_confirm = Util.generateUniqueTopic('delete-folder-only');
         this.callback_delete_folder_all_confirm = Util.generateUniqueTopic('delete-folder-all');
         this.callback_delete_item_confirm = Util.generateUniqueTopic('delete-item');
         this.callback_delete_keypair_confirm = Util.generateUniqueTopic('delete-keypair');
+
+        this.callback_edit_folder_confirm = Util.generateUniqueTopic('edit-folder');
+        this.callback_edit_item_confirm = Util.generateUniqueTopic('edit-item');
+        this.callback_edit_keypair_confirm = Util.generateUniqueTopic('edit-keypair');
     }
 
     componentDidMount(){
@@ -89,7 +96,7 @@ class Home extends Component{
             let key = data.create_key_input;
             let value = data.create_value_input;
 
-            let encrypted_root_pw = sha256(data.create_root_pw_input);
+            let encrypted_root_pw = data.create_root_pw_input;
             let encrypted_value = Util.aes.encrypt(value, encrypted_root_pw);
 
             if(key.length === 0 || value.length === 0){
@@ -121,6 +128,110 @@ class Home extends Component{
             let target_item = data.data;
             ipcRenderer.send('deleteItem', target_item);
         });
+        ipcRenderer.on(this.callback_delete_keypair_confirm, (e, data) => {
+            let target_keypair = data.data;
+            let encrypted_root_pw = data.edit_root_pw_input;
+            ipcRenderer.send('deleteKeypair', {
+                kpid: target_keypair.kpid,
+                user_id: this.state.uid,
+                encrypted_root_pw
+            });
+        });
+        ipcRenderer.on(this.callback_edit_folder_confirm, (e, data) => {
+            let folder = data.data;
+            let itemName = data.edit_item_input;
+
+            if(itemName.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['폴더명은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
+            ipcRenderer.send('editFolder', {
+                name: itemName,
+                fid: folder.fid
+            });
+        });
+        ipcRenderer.on(this.callback_edit_item_confirm, (e, data) => {
+            let item = data.data;
+            let itemName = data.edit_item_input;
+
+            if(itemName.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['항목명은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
+            ipcRenderer.send('editItem', {
+                name: itemName,
+                iid: item.iid
+            });
+        });
+        ipcRenderer.on(this.callback_edit_keypair_confirm, (e, data) => {
+            let keypair = data.data;
+            let new_key = data.edit_key_input;
+            let new_value = data.edit_value_input;
+            let encrypted_root_pw = data.edit_root_pw_input;
+
+            let encrypted_value = Util.aes.encrypt(new_value, encrypted_root_pw);
+
+            if(new_key.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['키 이름은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
+            if(new_value.length === 0){
+                IpcRouter.floatAlert({
+                    level: 1,
+                    text_list: ['키 값은 최소 1자 이상이어야 합니다.'],
+                    use_confirm: true
+                });
+                return;
+            }
+
+            ipcRenderer.send('editKeypair', {
+                new_key,
+                encrypted_value,
+                encrypted_root_pw,
+                kpid: keypair.kpid,
+                user_id: this.state.uid
+            });
+        });
+
+
+        ipcRenderer.on('syncDatabase', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.syncFolderItems(this.state.cur_fid);
+            }
+        });
+        ipcRenderer.on('syncKeypairs', (e, data) => {
+            if(!data.success){
+                IpcRouter.floatAlert({
+                    level: 2,
+                    text_list: [data.message],
+                    use_confirm: true
+                });
+            }else{
+                this.loadKeypairs(this.state.selected_item.iid);
+            }
+        });
+
         ipcRenderer.on('getAllFoldersByFid', (e, data) => {
             this.setState({
                 folders: data
@@ -136,79 +247,19 @@ class Home extends Component{
                 keypairs: data
             });
         });
-        ipcRenderer.on('createFolder', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.syncFolderItems(this.state.cur_fid);
-            }
-        });
-        ipcRenderer.on('createItem', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.syncFolderItems(this.state.cur_fid);
-            }
-        });
-        ipcRenderer.on('createKeypair', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.loadKeypairs(this.state.selected_item.iid);
-            }
-        });
-        ipcRenderer.on('deleteFolderOnly', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.syncFolderItems(this.state.cur_fid);
-            }
-        });
-        ipcRenderer.on('deleteFolderAll', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.syncFolderItems(this.state.cur_fid);
-            }
-        });
-        ipcRenderer.on('deleteItem', (e, data) => {
-            if(!data.success){
-                IpcRouter.floatAlert({
-                    level: 2,
-                    text_list: [data.message],
-                    use_confirm: true
-                });
-            }else{
-                this.syncFolderItems(this.state.cur_fid);
-            }
-        });
 
-        this.syncFolderItems(null);
+        ipcRenderer.on('searchedEntries', (e, data) => {
+            this.setState({
+                searched_folders: data.folders,
+                searched_items: data.items
+            });
+        });
 
         setInterval(() => {
             this.forceUpdate();
         }, 1000);
 
+        this.syncFolderItems(null);
         window.addEventListener('click', this.unfocusEntryEditMode);
     }
 
@@ -244,46 +295,82 @@ class Home extends Component{
                                 key:
                                     <>
                                         {
-                                            this.state.cur_fid !== null &&
-                                            <div className="navigator">
-                                                <div className="back-btn" onClick={this.backPathHistory}><IoChevronBack/>상위 폴더로 가기</div>
+                                            this.state.search_keyword.length === 0 ?
+                                            <>
+                                                {
+                                                    this.state.cur_fid !== null &&
+                                                    <div className="navigator">
+                                                        <div className="back-btn" onClick={this.backPathHistory}><IoChevronBack/>상위 폴더로 가기</div>
+                                                    </div>
+                                                }
+                                                <div className="entries">
+                                                    {
+                                                        this.state.folders.map(folder => (
+                                                            <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}
+                                                                onContextMenu={e => this.openFolderOption(folder)}>
+                                                                <div className="icon"><FaFolder/></div>
+                                                                <div className="name-cover">
+                                                                    <div className="name folder">{folder.name}</div>
+                                                                    <div className="count">({folder.count})</div>
+                                                                </div>
+                                                                <div className={"controller " + (this.state.editing_folder_id === folder.fid ? 'focus' : '')}>
+                                                                    <div className="edit un-unfocusable" onClick={e => this.editFolder(e, folder)}>수정</div>
+                                                                    <div className="del un-unfocusable" onClick={e => this.deleteFolder(e, folder)}>삭제</div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                    {
+                                                        this.state.items.map(item => (
+                                                            <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}
+                                                                onContextMenu={e => this.openItemOption(item)}>
+                                                                <div className="icon"><FaFileAlt/></div>
+                                                                <div className="name">{item.name}</div>
+                                                                <div className={"controller " + (this.state.editing_item_id === item.iid ? 'focus' : '')}>
+                                                                    <div className="edit un-unfocusable" onClick={e => this.editItem(e, item)}>수정</div>
+                                                                    <div className="del un-unfocusable" onClick={e => this.deleteItem(e, item)}>삭제</div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                    <div className="create">
+                                                        <div className="add" onClick={this.createFolder}>폴더 추가</div>
+                                                        <div className="add" onClick={this.createItem}>항목 추가</div>
+                                                    </div>
+                                                </div>
+                                            </> :
+                                            <div className="entries">
+                                                {
+                                                    this.state.searched_folders.map(folder => (
+                                                        <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}
+                                                            onContextMenu={e => this.openFolderOption(folder)}>
+                                                            <div className="icon"><FaFolder/></div>
+                                                            <div className="name-cover">
+                                                                <div className="name folder">{folder.name}</div>
+                                                                <div className="count">({folder.count})</div>
+                                                            </div>
+                                                            <div className={"controller " + (this.state.editing_folder_id === folder.fid ? 'focus' : '')}>
+                                                                <div className="edit un-unfocusable" onClick={e => this.editFolder(e, folder)}>수정</div>
+                                                                <div className="del un-unfocusable" onClick={e => this.deleteFolder(e, folder)}>삭제</div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
+                                                {
+                                                    this.state.searched_items.map(item => (
+                                                        <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}
+                                                            onContextMenu={e => this.openItemOption(item)}>
+                                                            <div className="icon"><FaFileAlt/></div>
+                                                            <div className="name">{item.name}</div>
+                                                            <div className={"controller " + (this.state.editing_item_id === item.iid ? 'focus' : '')}>
+                                                                <div className="edit un-unfocusable" onClick={e => this.editItem(e, item)}>수정</div>
+                                                                <div className="del un-unfocusable" onClick={e => this.deleteItem(e, item)}>삭제</div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
                                             </div>
                                         }
-                                        <div className="entries">
-                                            {
-                                                this.state.folders.map(folder => (
-                                                    <div className="entry-item" key={folder.fid} onClick={e => this.enterFolder(folder)}
-                                                        onContextMenu={e => this.openFolderOption(folder)}>
-                                                        <div className="icon"><FaFolder/></div>
-                                                        <div className="name-cover">
-                                                            <div className="name folder">{folder.name}</div>
-                                                            <div className="count">({folder.count})</div>
-                                                        </div>
-                                                        <div className={"controller " + (this.state.editing_folder_id === folder.fid ? 'focus' : '')}>
-                                                            <div className="edit un-unfocusable">수정</div>
-                                                            <div className="del un-unfocusable" onClick={e => this.deleteFolder(e, folder)}>삭제</div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            }
-                                            {
-                                                this.state.items.map(item => (
-                                                    <div className="entry-item" key={item.iid} onClick={e => this.revealItem(item)}
-                                                        onContextMenu={e => this.openItemOption(item)}>
-                                                        <div className="icon"><FaFileAlt/></div>
-                                                        <div className="name">{item.name}</div>
-                                                        <div className={"controller " + (this.state.editing_item_id === item.iid ? 'focus' : '')}>
-                                                            <div className="edit un-unfocusable">수정</div>
-                                                            <div className="del un-unfocusable" onClick={e => this.deleteItem(e, item)}>삭제</div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            }
-                                            <div className="create">
-                                                <div className="add" onClick={this.createFolder}>폴더 추가</div>
-                                                <div className="add" onClick={this.createItem}>항목 추가</div>
-                                            </div>
-                                        </div>
                                         <div className="route-path">
                                             <div className="path-list">
                                             {
@@ -334,11 +421,12 @@ class Home extends Component{
                                 <div className="main-content">
                                     {
                                         this.state.keypairs.map((kp, ind) => {
+                                            let raw = Util.aes.decrypt(kp.encrypted_value, this.state.encrypted_pw);
                                             return(
-                                                <div className="key-pair" key={ind}>
+                                                <div className="key-pair" key={ind} onClick={e => this.editKeypair(e, kp, raw)}>
                                                     <div className="key"><div>{kp.key}</div></div>
                                                     <div className="value-wrapper">
-                                                        <div>{Util.aes.decrypt(kp.encrypted_value, this.state.encrypted_pw)}</div>
+                                                        <div>{raw}</div>
                                                     </div>
                                                 </div>
                                             );
@@ -365,6 +453,91 @@ class Home extends Component{
                 </div>
             </div>
         );
+    }
+
+    editFolder = (e, folder) => {
+        e.stopPropagation();
+
+        IpcRouter.floatAsk({
+            level: 1,
+            text_list: [`폴더 이름 수정`],
+            jsx: [
+                {
+                    type: 'input',
+                    placeholder: '변경할 폴더 이름을 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'edit_item_input'
+                }
+            ],
+            use_confirm: true,
+            data: folder,
+            confirm_topic: this.callback_edit_folder_confirm
+        });
+    }
+
+    editItem = (e, item) => {
+        e.stopPropagation();
+
+        IpcRouter.floatAsk({
+            level: 1,
+            text_list: [`항목 이름 수정`],
+            jsx: [
+                {
+                    type: 'input',
+                    placeholder: '변경할 항목 이름을 입력하세요...',
+                    enter_to_confirm: true,
+                    name: 'edit_item_input'
+                }
+            ],
+            use_confirm: true,
+            data: item,
+            confirm_topic: this.callback_edit_item_confirm
+        });
+    }
+
+    editKeypair = (e, keypair, raw) => {
+        e.stopPropagation();
+
+        IpcRouter.floatAsk({
+            level: 1,
+            text_list: [`키페어 수정/삭제`],
+            jsx: [
+                {
+                    type: 'input',
+                    placeholder: '변경할 키 이름을 입력하세요...',
+                    value: keypair.key,
+                    name: 'edit_key_input'
+                },
+                {
+                    type: 'input',
+                    placeholder: '변경할 키 값을 입력하세요...',
+                    value: raw,
+                    hide: true,
+                    name: 'edit_value_input'
+                },
+                {
+                    type: 'input',
+                    placeholder: '계정 비밀번호를 입력하세요...',
+                    class: ['danger'],
+                    hide: true,
+                    name: 'edit_root_pw_input',
+                    crypto: 'sha256'
+                },
+                {
+                    type: 'button',
+                    text: '수정완료',
+                    class: ['std'],
+                    callback_topic: this.callback_edit_keypair_confirm
+                },
+                {
+                    type: 'button',
+                    text: '해당 키페어 삭제',
+                    class: ['danger'],
+                    callback_topic: this.callback_delete_keypair_confirm
+                }
+            ],
+            data: keypair
+        });
     }
 
     deleteFolder = (e, folder) => {
@@ -441,7 +614,8 @@ class Home extends Component{
             cur_fid: folder.fid,
             folder_hierarchy_list,
             editing_folder_id: null,
-            editing_item_id: null
+            editing_item_id: null,
+            search_keyword: ''
         });
         this.syncFolderItems(folder.fid);
     }
@@ -480,10 +654,17 @@ class Home extends Component{
         ipcRenderer.send('getAllItemsByFid', {
             cur_fid: cur_fid
         });
+
+        this.setState({
+            editing_folder_id: null,
+            editing_item_id: null
+        });
     }
 
     searchInputHandler = e => {
+        let keyword = e.target.value;
         this.setState({search_keyword: e.target.value});
+        ipcRenderer.send('searchEntriesWithKeyword', {keyword});
     }
 
     flushSearcher = () => {
@@ -543,6 +724,7 @@ class Home extends Component{
                     placeholder: '사용자 비밀번호를 입력하세요...',
                     enter_to_confirm: true,
                     name: 'create_root_pw_input',
+                    crypto: 'sha256',
                     hide: true
                 }
             ]

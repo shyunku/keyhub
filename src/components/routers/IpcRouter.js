@@ -38,8 +38,16 @@ module.exports = {
     },
     floatAsk: function(popup_data, bound = {}, properties = {}){
         let texts = popup_data?.text_list.length || 0;
-        let jsxs = popup_data?.jsx?.length || 0;
-        let height = 130 + texts * 20 + jsxs * 40;
+        let jsxs = (popup_data?.jsx || []).reduce((acc, cur) => {
+            if(cur.type === 'input') acc += 40;
+            else if(cur.type === 'button') acc += 35;
+            else acc += 30;
+            return acc;
+        }, 0);
+        let confirm_addition = popup_data.use_confirm === true ? 35 : 0;
+        let cancel_addition = popup_data.use_cancel === true ? 35 : 0;
+        let height = 110 + texts * 18 + jsxs + confirm_addition + cancel_addition;
+        
         ipcRenderer.send('floatPopup', Object.assign(
             {
                 preferredWindowProperties: Object.assign({

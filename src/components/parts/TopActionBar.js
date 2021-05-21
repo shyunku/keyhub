@@ -14,7 +14,7 @@ class TopActionBar extends Component{
     render(){
         return(
             <div className="top-action-bar">
-                <div className="title">KeyHub - 0.4v</div>
+                <div className="title">KeyHub - 0.5.0v</div>
                 <div className="close-btn clickable" onClick={this.closeWindow}>
                     <IoMdClose/>
                 </div>

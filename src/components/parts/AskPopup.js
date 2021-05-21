@@ -3,6 +3,7 @@ import React from 'react';
 import {IoMdClose} from 'react-icons/io';
 
 const electron = window.require("electron");
+const sha256 = require('sha256');
 const {ipcRenderer} = electron;
 
 class AskPopup extends React.Component{
@@ -27,8 +28,11 @@ class AskPopup extends React.Component{
             let wrap = {};
             for(let jsx of data.jsx){
                 switch(jsx.type){
-                    case 'input': wrap[jsx.name] = ''; break;
-                    default: break;
+                    case 'input': 
+                        wrap[jsx.name] = jsx.value || '';
+                        break;
+                    default:
+                        break;
                 }
             }
             this.setState(Object.assign(data, wrap));
@@ -37,23 +41,41 @@ class AskPopup extends React.Component{
 
     confirmButtonClickHandler = () => {
         if(this.state.confirm_topic){
-            IpcRouter.redirect(this.state.confirm_topic, this.state);
+            IpcRouter.redirect(this.state.confirm_topic, this.applyCrypto(this.state));
         }
         electron.remote.getCurrentWindow().close();
     }
 
     cancelButtonClickHandler = () => {
         if(this.state.cancel_topic){
-            IpcRouter.redirect(this.state.cancel_topic, this.state);
+            IpcRouter.redirect(this.state.cancel_topic, this.applyCrypto(this.state));
         }
         electron.remote.getCurrentWindow().close();
     }
 
     buttonClickHandler = callback_topic => {
         if(callback_topic){
-            IpcRouter.redirect(callback_topic, this.state);
+            IpcRouter.redirect(callback_topic, this.applyCrypto(this.state));
         }
         electron.remote.getCurrentWindow().close();
+    }
+
+    applyCrypto = (cur_state) => {
+        let state = Object.assign({}, cur_state);
+        const jsx = state.jsx;
+
+        for(let e of jsx){
+            state[e.name] = this.loadCrypto(e.crypto)(state[e.name]);
+        }
+
+        return state;
+    }
+
+    loadCrypto = label => {
+        switch(label){
+            case 'sha256': return sha256;
+            default: return e => e;
+        }
     }
 
     inputChangeHandler = (e) =>{
@@ -129,12 +151,6 @@ class AskPopup extends React.Component{
                         &&
                         <button className="cancel" onClick={this.cancelButtonClickHandler}>
                             {this.state.cancel_button_label}
-                        </button>
-                    }
-                    {
-                        !(this.state.use_confirm || this.state.use_cancel) &&
-                        <button className="cancel" onClick={this.cancelButtonClickHandler}>
-                            창닫기
                         </button>
                     }
                 </div>

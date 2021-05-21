@@ -147,6 +147,46 @@ module.exports = function(db){
                 }
             });
         },
+        deleteKeypair: function(kpid, resolve){
+            db.run(`DELETE FROM keypair_master WHERE kpid = ?;`, [kpid], err => {
+                if(err){
+                    console.error(err);
+                    resolve(false);
+                }else{
+                    resolve(true);
+                }
+            });
+        },
+        editFolder: function(fid, name, resolve){
+            db.run(`UPDATE folder_master SET name = ? WHERE fid = ?;`, [name, fid], (err) => {
+                if(err){
+                    console.error(err);
+                    resolve(false);
+                }else{
+                    resolve(true);
+                }
+            });
+        },
+        editItem: function(iid, name, resolve){
+            db.run(`UPDATE item_master SET name = ? WHERE iid = ?;`, [name, iid], (err) => {
+                if(err){
+                    console.error(err);
+                    resolve(false);
+                }else{
+                    resolve(true);
+                }
+            });
+        },
+        editKeypair: function(kpid, key, value, resolve){
+            db.run(`UPDATE keypair_master SET key = ?, encrypted_value = ? WHERE kpid = ?;`, [key, value, kpid], (err) => {
+                if(err){
+                    console.error(err);
+                    resolve(false);
+                }else{
+                    resolve(true);
+                }
+            });
+        },
         getRecursiveCountsItemOnly: function(fid, resolve){
             db.all(`
                 WITH RECURSIVE recursive_item_cnt(parent, cur, name)
@@ -164,6 +204,30 @@ module.exports = function(db){
             `, [fid], (err, results) => {
                 if(err) throw err;
                 resolve(results[0]);
+            });
+        },
+        searchEntriesWithKeyword: function(keyword, resolve){
+            db.all(`
+                SELECT *, (
+                    SELECT sum(cnt)
+                    FROM
+                    (
+                        SELECT count(*) as cnt
+                        FROM folder_master
+                        WHERE parent_fid = fm.fid
+                            UNION ALL
+                        SELECT count(*) as cnt
+                        FROM item_master
+                        WHERE fid = fm.fid
+                    )
+                ) AS count FROM folder_master as fm WHERE name LIKE '%${keyword}%';
+            `, [], (err, folders) => {
+                if(err) throw err;
+                db.all(`SELECT * FROM item_master WHERE name LIKE '%${keyword}%';`, [], (err, items) => {
+                    if(err) throw err;
+                    
+                    resolve({folders, items});
+                });
             });
         }
     };
