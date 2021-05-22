@@ -71,7 +71,7 @@ class Login extends Component{
             this.goHome();
         });
 
-        setInterval(() => {
+        this.updateThread = setInterval(() => {
             this.forceUpdate();
         }, 1000);
     }
@@ -85,6 +85,7 @@ class Login extends Component{
 
     componentWillUnmount(){
         ipcRenderer.removeAllListeners();
+        clearInterval(this.updateThread);
     }
 
     render(){

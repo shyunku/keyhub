@@ -23,18 +23,19 @@ let entryUrlPrefix = process.env.ELECTRON_START_URL || url.format({
 });
 let coreDB, userDB;
 let coreQuery, userQuery;
+const defaultWebPreferences = {
+    nodeIntegration: true,
+    enableRemoteModule: true,
+    webviewTag: true,
+    nodeIntegrationInSubFrames: true,
+    webSecurity: true,
+    spellcheck: false,
+    contextIsolation: false
+};
 const defaultWindowProperties = {
     width: 500,
     height: 500,
-    webPreferences: {
-        nodeIntegration: true,
-        enableRemoteModule: true,
-        webviewTag: true,
-        webSecurity: false,
-        devTools: packageJson.debug || false,
-        spellcheck: false,
-        contextIsolation: false
-    },
+    webPreferences: defaultWebPreferences,
     resizable: false,
     frame: false,
     center: true,
@@ -77,7 +78,6 @@ ipcMain.on('getUserAccounts', async (e, data) => {
 ipcMain.on('authenticate', (e, data) => {
     const {user_id, encrypted_pw} = data;
     fetchUserMap(userMap => {
-        console.log(userMap, user_id);
         if(userMap.hasOwnProperty(user_id)){
             let userInfo = userMap[user_id];
             let answer = userInfo.encrypted_pw;
@@ -296,6 +296,7 @@ ipcMain.on('getAllFoldersByFid', (e, data) => {
     const {cur_fid} = data;
     userQuery.getAllFoldersByFid(cur_fid, res => {
         e.reply('getAllFoldersByFid', res);
+        ipcMain.broadcast('getAllFoldersByFid', res);
     });
 });
 ipcMain.on('getAllItemsByFid', (e, data) => {
@@ -442,15 +443,7 @@ function createWindow(){
         minHeight: 300,
         frame: false,
         show: false,
-        webPreferences: {
-            nodeIntegration: true,
-            enableRemoteModule: true,
-            webviewTag: true,
-            nodeIntegrationInSubFrames: true,
-            webSecurity: false,
-            spellcheck: false,
-            contextIsolation: false
-        }
+        webPreferences: defaultWebPreferences
     });
 
     mainWindow.loadURL(entryUrlPrefix);
@@ -560,3 +553,10 @@ ipcMain.broadcast = function(topic, data) {
         window.webContents.send(topic, data);
     }
 }
+
+// setInterval(() => {
+//     if(mainWindow){
+//         let angle = new Date().getTime() / 800;
+//         mainWindow.setPosition(parseInt(800 + 200 * Math.cos(angle)), parseInt(500 + 200 * Math.sin(angle)));
+//     }
+// });

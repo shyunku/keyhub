@@ -1,14 +1,13 @@
 import React, {Component} from 'react';
 import {IoMdClose, IoMdAddCircle, IoIosArrowForward} from 'react-icons/io';
 import {IoChevronBack} from 'react-icons/io5';
-import {FaFolder, FaFileAlt, FaFile} from 'react-icons/fa';
+import {FaFolder, FaFileAlt} from 'react-icons/fa';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import Util from 'assets/js/Util';
 
 const electron = window.require("electron");
 const {ipcRenderer} = electron;
-const sha256 = require('sha256');
 const queryString = require('query-string');
 
 class Home extends Component{
@@ -58,8 +57,6 @@ class Home extends Component{
     }
 
     componentDidMount(){
-        const {folder_hierarchy_list, cur_fid} = this.state;
-
         ipcRenderer.on(this.callback_create_folder_confirm, (e, data) => {
             let itemName = data.create_item_input;
             if(itemName.length === 0){
@@ -264,9 +261,6 @@ class Home extends Component{
     }
 
     unfocusEntryEditMode = (e) => {
-        let target = e.target;
-
-        // console.log(target.classList);
         this.setState({
             editing_folder_id: null,
             editing_item_id: null

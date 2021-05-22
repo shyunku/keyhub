@@ -46,7 +46,7 @@ class AlertPopup extends React.Component{
     render() {
         return (
             <div className="popup">
-                <div className={"popup-level-image-wrapper " + `level-${this.state.level}`}>
+                <div className={`popup-level-image-wrapper level-${this.state.level}`}>
                     {
                         {
                             0: <IoCheckmarkCircle/>,

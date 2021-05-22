@@ -2,11 +2,9 @@ import React, {Component} from 'react';
 import {IoMdClose} from 'react-icons/io';
 
 const electron = window.require("electron");
-class TopActionBar extends Component{
-    constructor(props){
-        super(props);
-    }
+const packageJson = require('components/../../package.json');
 
+class TopActionBar extends Component{
     closeWindow = () => {
         electron.remote.getCurrentWindow().close();
     }
@@ -14,7 +12,7 @@ class TopActionBar extends Component{
     render(){
         return(
             <div className="top-action-bar">
-                <div className="title">KeyHub - 0.5.0v</div>
+                <div className="title">KeyHub - {packageJson.version}v</div>
                 <div className="close-btn clickable" onClick={this.closeWindow}>
                     <IoMdClose/>
                 </div>
