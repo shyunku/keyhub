@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import {Switch, Route, useLocation, HashRouter} from 'react-router-dom';
+import {Switch, Route, HashRouter} from 'react-router-dom';
 
 import Login from 'components/pages/Login';
 import AlertPopup from 'components/parts/AlertPopup';

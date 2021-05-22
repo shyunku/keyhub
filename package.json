@@ -1,5 +1,6 @@
 {
   "main": "public/electron/main.js",
+  "author": "shyunku",
   "name": "keyhub",
   "version": "0.5.1",
   "schemeVersion": "v1",
@@ -16,6 +17,7 @@
     "query-string": "7.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-helmet": "6.1.0",
     "react-icons": "4.2.0",
     "react-router-dom": "5.2.0",
     "react-scripts": "4.0.3",
@@ -77,7 +79,8 @@
             "ia32"
           ]
         }
-      ]
+      ],
+      "icon": "./public/favicon256.ico"
     },
     "nsis": {
       "oneClick": false,

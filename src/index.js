@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Helmet } from 'react-helmet';
 import reportWebVitals from './reportWebVitals';
+
 import MainRouter from 'components/routers/MainRouter';
 import 'assets/scss/reset.scss';
 import 'assets/scss/default.scss';
