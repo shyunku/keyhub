@@ -46,6 +46,10 @@ class Login extends Component{
                     use_confirm: true,
                     confirm_topic: this.callback_create_account_confirm
                 });
+
+                this.setState({
+                    selected_account_id: data.uid
+                });
             }else{
                 IpcRouter.floatAlert({
                     level: 1,

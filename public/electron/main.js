@@ -113,8 +113,7 @@ ipcMain.on('createAccount', (e, data) => {
                 message: '이미 사용 중인 계정 이름입니다.'
             });
         }else{
-            // TODO :: 계정 저장
-            coreQuery.createUser(name, sha256(encrypted_pw), () => {
+            coreQuery.createUser(name, sha256(encrypted_pw), (lastId) => {
                 fs.copyFileSync(
                     pathManager.path.userTemplateDB, 
                     pathManager.directory.userAccountDatabase + '/' + name + '.sqlite3'
@@ -124,6 +123,7 @@ ipcMain.on('createAccount', (e, data) => {
 
                 e.reply('createAccount', {
                     success: true,
+                    uid: lastId
                 });
             });
         }
@@ -149,6 +149,7 @@ ipcMain.on('createItem', (e, data) => {
 });
 ipcMain.on('createKeypair', (e, data) => {
     const {key, encrypted_value, iid, encrypted_root_pw, user_id} = data;
+
     fetchUserMap(userMap => {
         if(userMap.hasOwnProperty(user_id)){
             let userInfo = userMap[user_id];

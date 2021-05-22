@@ -10,9 +10,9 @@ module.exports = function(db){
         createUser: function(name, encrypted_pw, resolve) {
             db.run(
                 `INSERT INTO user_master(name, encrypted_pw) VALUES(?, ?);`, 
-                [name, encrypted_pw], (err) => {
+                [name, encrypted_pw], function(err) {
                 if(err) throw err;
-                resolve();
+                resolve(this.lastID);
             });
         }
     };

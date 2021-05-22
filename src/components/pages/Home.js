@@ -711,6 +711,7 @@ class Home extends Component{
                     type: 'input',
                     placeholder: '해당 키의 값을 입력하세요...',
                     enter_to_confirm: true,
+                    hide: true,
                     name: 'create_value_input'
                 },
                 {
