@@ -2,7 +2,7 @@
   "main": "public/electron/main.js",
   "author": "shyunku",
   "name": "keyhub",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "schemeVersion": "v1",
   "private": true,
   "debug": true,

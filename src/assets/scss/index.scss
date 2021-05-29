@@ -312,15 +312,27 @@ html, body, #root{
                         background-color: $main-theme-color;
                         color: white;
                     }
+                    &.invalid{
+                        .name{
+                            color: rgb(197, 197, 197);
+                        }
+                    }
 
+                    .icon{
+                        display: flex;
+                        align-items: center;
+                        font-size: 15px;
+                        flex: 1;
+                    }
                     .name{
                         font-size: 15px;
                         margin-right: 5px;
                     }
                     .db-not-exists{
                         color: red;
-                        font-size: 15px;
-                        flex: 1;
+                    }
+                    .user-not-exists{
+                        color: #edaa00;
                     }
                     .last-time{
                         font-size: 12px;

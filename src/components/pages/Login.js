@@ -2,7 +2,8 @@ import React, {Component, createRef} from 'react';
 import TopActionBar from 'components/parts/TopActionBar';
 import IpcRouter from 'components/routers/IpcRouter';
 import {HiOutlineArrowNarrowRight} from 'react-icons/hi';
-import {RiErrorWarningLine} from 'react-icons/ri';
+import {IoMdCloseCircleOutline} from 'react-icons/io';
+import {IoWarningOutline} from 'react-icons/io5';
 import Util from 'assets/js/Util';
 
 const electron = window.require("electron");
@@ -26,6 +27,7 @@ class Login extends Component{
         };
 
         this.callback_create_account_confirm = Util.generateUniqueTopic('cac');
+        this.callback_delete_account_confirm = Util.generateUniqueTopic('dac');
 
         this.name_input_ref = createRef();
         this.pw_input_ref = createRef();
@@ -75,6 +77,10 @@ class Login extends Component{
             this.goHome();
         });
 
+        ipcRenderer.on(this.callback_delete_account_confirm, (e, data) => {
+            
+        });
+
         this.updateThread = setInterval(() => {
             this.forceUpdate();
         }, 1000);
@@ -103,16 +109,24 @@ class Login extends Component{
                             <div className="account-list">
                                 {
                                     this.state.fetched_user_list.map(user_info => {
+                                        const isInvalid = user_info.user_valid === false || user_info.db_exists === false;
                                         return(
-                                            <div className={"account " + (this.state.selected_account_id === user_info.user_id ? 'selected' : '')}
-                                                onClick={user_info.db_exists ? e => this.accountSelectHandler(user_info.user_id) : null} 
-                                                key={user_info.user_id}>
+                                            <div className={"account" + (this.state.selected_account_id === user_info.user_id ? ' selected' : '')
+                                                    + (isInvalid ? ' invalid': '')}
+                                                onClick={isInvalid ? null : e => this.accountSelectHandler(user_info.user_id)}
+                                                key={user_info.name}>
                                                 <div className="name">{user_info.name}</div>
                                                 {
-                                                    !user_info.db_exists &&
-                                                    <div className="db-not-exists" title="데이터베이스가 없습니다.">
-                                                        <RiErrorWarningLine/>
-                                                    </div>
+                                                    isInvalid && (
+                                                        user_info.user_valid === false ?
+                                                        <div className="icon user-not-exists" title="데이터는 있으나 계정 정보가 없습니다.">
+                                                            <IoWarningOutline/>
+                                                        </div> :
+                                                        // Removable
+                                                        <div className="icon db-not-exists" title="계정 정보는 있으나 데이터가 없습니다.">
+                                                            <IoMdCloseCircleOutline/>
+                                                        </div>
+                                                    )
                                                 }
                                                 <div className="last-time">{Util.relativeTime(user_info.last_modified_time)}</div>
                                             </div>
@@ -215,6 +229,24 @@ class Login extends Component{
 
         this.setState({
             encrypted_pw: sha256(pw)
+        });
+    }
+
+    onNoAccountInfoUserClick = e => {
+        IpcRouter.floatAlert({
+            level: 0,
+            text_list: ['해당 계정은 계정 정보가 없습니다.', '삭제하시겠습니까?', '삭제하시면 복구가 불가능합니다.'],
+            use_confirm: true,
+            confirm_topic: this.callback_delete_account_confirm
+        });
+    }
+
+    onNoDatabaseUserClick = () => {
+        IpcRouter.floatAlert({
+            level: 0,
+            text_list: ['해당 계정은 데이터베이스가 없습니다.', '삭제하시겠습니까?'],
+            use_confirm: true,
+            confirm_topic: this.callback_delete_account_confirm
         });
     }
 

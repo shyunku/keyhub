@@ -518,8 +518,9 @@ function fetchUserInfo(resolve){
             });
 
             let userMap = dbRes.reduce((acc, cur) => {
-                // DB에는 있는데 데이터 파일 존재하지 않음으로 표시
+                // 유저 정보는 있는 것으로 확인된 것들
                 cur.db_exists = false;
+                cur.user_valid = true;
                 cur.last_modified_time = null;
                 acc[cur.name] = cur;
                 return acc;
@@ -528,13 +529,14 @@ function fetchUserInfo(resolve){
             for(let fuserInfo of userInfoFromDatabases){
                 let fName = fuserInfo.name;
                 if(userMap.hasOwnProperty(fName)){
-                    // DB에 있고 데이터 파일 존재 시
+                    // DB가 있는 것들
                     userMap[fName].db_exists = true;
                 }else{
-                    // DB에는 없는데 데이터 파일 존재 시
+                    // DB가 있지만 유저 정보가 없는 것들
                     userMap[fName] = {
                         name: fName,
-                        db_exists: false
+                        db_exists: true,
+                        user_valid: false,
                     };
                 }
                 userMap[fName].last_modified_time = fuserInfo.last_modified_time;
