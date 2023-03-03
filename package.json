@@ -2,7 +2,7 @@
   "main": "public/electron/main.js",
   "author": "shyunku",
   "name": "keyhub",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "schemeVersion": "v1",
   "private": true,
   "debug": true,
@@ -14,7 +14,6 @@
     "concurrently": "6.1.0",
     "crypto-js": "4.0.0",
     "electron-installer-dmg": "3.0.0",
-    "node-sass": "4.14.0",
     "query-string": "7.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -23,6 +22,7 @@
     "react-router-dom": "5.2.0",
     "react-scripts": "4.0.3",
     "react-transition-group": "4.4.1",
+    "sass": "1.58.3",
     "sha256": "0.2.0",
     "sqlite3": "5.0.2",
     "wait-on": "5.3.0",
@@ -87,6 +87,15 @@
       "oneClick": false,
       "perMachine": false,
       "include": "win-installer.nsh"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "./build/default/",
+        "to": "default",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }
