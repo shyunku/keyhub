@@ -2,11 +2,14 @@
   "main": "public/electron/main.js",
   "author": "shyunku",
   "name": "keyhub",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "schemeVersion": "v1",
   "private": true,
   "debug": true,
   "homepage": "./",
+  "config": {
+    "react_port": 4125
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -33,14 +36,14 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "win-react": "set BROWSER=none&& yarn start",
-    "win-electron": "set ELECTRON_START_URL=http://localhost:3000 && wait-on http://localhost:3000 && electron .",
-    "win-all": "concurrently \"set BROWSER=none&& yarn start\" \"set ELECTRON_START_URL=http://localhost:3000 && wait-on http://localhost:3000 && electron .\"",
-    "win-release": "yarn build && electron-builder build -c.extraMetadata.main=build/electron/main.js",
-    "mac-react": "BROWSER=none yarn start",
-    "mac-electron": "export ELECTRON_START_URL=http://localhost:3000 && wait-on http://localhost:3000 && electron .",
-    "mac-all": "concurrently \"BROWSER=none yarn start\" \"export ELECTRON_START_URL=http://localhost:3000 && wait-on http://localhost:3000 && electron .\"",
-    "run-build": "yarn build && electron ."
+    "win-react": "set PORT=%npm_package_config_react_port% && set BROWSER=none&& npm start",
+    "mac-react": "PORT=$npm_package_config_react_port BROWSER=none npm start",
+    "win-electron": "set ELECTRON_START_URL=http://localhost:%npm_package_config_react_port% && set NODE_ENV=development && wait-on http://localhost:%npm_package_config_react_port% && electron .",
+    "mac-electron": "export ELECTRON_START_URL=http://localhost:$npm_package_config_react_port && export NODE_ENV=development && wait-on http://localhost:$npm_package_config_react_port && electron .",
+    "win-all": "concurrently \"npm run win-react\" \"npm run win-electron\"",
+    "mac-all": "concurrently \"npm run mac-react\" \"npm run mac-electron\"",
+    "win-pack": "npm run build && electron-builder build -c.extraMetadata.main=build/electron/main.js",
+    "mac-pack": "npm run build && electron-builder build"
   },
   "eslintConfig": {
     "extends": [
@@ -61,8 +64,8 @@
     ]
   },
   "devDependencies": {
-    "electron": "12.0.7",
-    "electron-builder": "22.10.5"
+    "electron": "23.1.0",
+    "electron-builder": "23.6.0"
   },
   "build": {
     "productName": "Keyhub",
