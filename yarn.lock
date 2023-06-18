@@ -1156,6 +1156,11 @@
   optionalDependencies:
     "global-agent" "^3.0.0"
 
+"@electron/remote@2.0.10":
+  "integrity" "sha512-3SFKKaQXcyWgwmibud+UqJl/XlHOgLcI3fwtB9pNelPSJAcTxocOJrF6FaxBIQaj1+R05Di6xuAswZpXAW7xhA=="
+  "resolved" "https://registry.npmjs.org/@electron/remote/-/remote-2.0.10.tgz"
+  "version" "2.0.10"
+
 "@electron/universal@1.2.1":
   "integrity" "sha512-7323HyMh7KBAl/nPDppdLsC87G6RwRU02dy5FPeGB1eS7rUePh55+WNWiDPLhFQqqVPHzh77M69uhmoT8XnwMQ=="
   "resolved" "https://registry.npmjs.org/@electron/universal/-/universal-1.2.1.tgz"
@@ -4907,7 +4912,7 @@
   "resolved" "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.671.tgz"
   "version" "1.3.671"
 
-"electron@23.1.0":
+"electron@>= 13.0.0", "electron@23.1.0":
   "integrity" "sha512-LRgACMpVrmjfYWPgCSyJ+TFQ/FPeniOowpO57z0xUcTchfC7EH+5rUncgYN+uMvqePiYDce+ywZeCIFaO8x/Nw=="
   "resolved" "https://registry.npmjs.org/electron/-/electron-23.1.0.tgz"
   "version" "23.1.0"

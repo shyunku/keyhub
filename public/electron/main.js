@@ -4,6 +4,7 @@ const path = require("path");
 const url = require("url");
 const sha256 = require("sha256");
 const { ipcMain, webContents, app, BrowserWindow, screen, remote, Menu } = require("electron");
+require("@electron/remote/main").initialize();
 
 const packageJson = require("../../package.json");
 const pathManager = require("./path");
@@ -422,6 +423,8 @@ function makeWindow(isModal, arg, callback = () => {}) {
       parentWindow.focus();
     }
   });
+
+  require("@electron/remote/main").enable(newWindow.webContents);
 }
 
 function createWindow() {
@@ -459,6 +462,7 @@ function createWindow() {
     mainWindow.hide();
     mainWindow.show();
   });
+  require("@electron/remote/main").enable(mainWindow.webContents);
 }
 
 function getWrappingScreen(winBound) {
@@ -483,10 +487,12 @@ function getWrappingScreen(winBound) {
 
 async function setSubjectUserDB(name) {
   try {
-    sqlite.getUserDatabaseContext(name, (context) => {
-      userDB = context;
-      userQuery = userQueryLib(userDB);
-      resolve();
+    return new Promise((resolve, reject) => {
+      sqlite.getUserDatabaseContext(name, (context) => {
+        userDB = context;
+        userQuery = userQueryLib(userDB);
+        resolve();
+      });
     });
   } catch (err) {
     console.error(err);

@@ -2,7 +2,7 @@
   "main": "public/electron/main.js",
   "author": "shyunku",
   "name": "keyhub",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "schemeVersion": "v1",
   "private": true,
   "debug": true,
@@ -11,6 +11,7 @@
     "react_port": 4125
   },
   "dependencies": {
+    "@electron/remote": "2.0.10",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
